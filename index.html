@@ -205,6 +205,13 @@
             padding: 25px;
             border: 1px solid #334155;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .panel {
+                padding: 15px;
+            }
         }
 
         .panel h2 {
@@ -473,11 +480,24 @@
             position: relative;
             height: 400px;
             margin: 20px 0;
+            width: 100%;
         }
 
         @media (max-width: 768px) {
             .chart-container {
                 height: 300px;
+                margin: 10px 0;
+            }
+            
+            .chart-container canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-container {
+                height: 250px;
             }
         }
 
@@ -1178,6 +1198,12 @@
             const inflowData = forecast.map(week => week.inflow);
             const outflowData = forecast.map(week => -week.outflow);
             
+            // Responsive font sizes
+            const isMobile = window.innerWidth < 768;
+            const legendFontSize = isMobile ? 10 : 14;
+            const titleFontSize = isMobile ? 14 : 18;
+            const tickFontSize = isMobile ? 9 : 12;
+            
             forecastChart = new Chart(chartCtx, {
                 type: 'line',
                 data: {
@@ -1191,8 +1217,8 @@
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
+                            pointRadius: isMobile ? 4 : 6,
+                            pointHoverRadius: isMobile ? 6 : 8,
                             pointBackgroundColor: '#10b981',
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2
@@ -1206,8 +1232,8 @@
                             borderDash: [5, 5],
                             fill: false,
                             tension: 0.4,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            pointRadius: isMobile ? 3 : 4,
+                            pointHoverRadius: isMobile ? 5 : 6
                         },
                         {
                             label: 'Expenses',
@@ -1218,14 +1244,14 @@
                             borderDash: [5, 5],
                             fill: false,
                             tension: 0.4,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            pointRadius: isMobile ? 3 : 4,
+                            pointHoverRadius: isMobile ? 5 : 6
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     interaction: {
                         mode: 'index',
                         intersect: false,
@@ -1237,11 +1263,13 @@
                             labels: {
                                 color: '#e2e8f0',
                                 font: {
-                                    size: 14,
+                                    size: legendFontSize,
                                     weight: 'bold'
                                 },
-                                padding: 15,
-                                usePointStyle: true
+                                padding: isMobile ? 8 : 15,
+                                usePointStyle: true,
+                                boxWidth: isMobile ? 8 : 12,
+                                boxHeight: isMobile ? 8 : 12
                             }
                         },
                         title: {
@@ -1249,10 +1277,10 @@
                             text: '6-Week Cash Flow Projection',
                             color: '#10b981',
                             font: {
-                                size: 18,
+                                size: titleFontSize,
                                 weight: 'bold'
                             },
-                            padding: 20
+                            padding: isMobile ? 10 : 20
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -1262,6 +1290,12 @@
                             borderWidth: 1,
                             padding: 12,
                             displayColors: true,
+                            titleFont: {
+                                size: isMobile ? 11 : 13
+                            },
+                            bodyFont: {
+                                size: isMobile ? 10 : 12
+                            },
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
@@ -1285,9 +1319,11 @@
                             ticks: {
                                 color: '#94a3b8',
                                 font: {
-                                    size: 12,
+                                    size: tickFontSize,
                                     weight: 'bold'
-                                }
+                                },
+                                maxRotation: isMobile ? 45 : 0,
+                                minRotation: isMobile ? 45 : 0
                             }
                         },
                         y: {
@@ -1298,7 +1334,7 @@
                             ticks: {
                                 color: '#94a3b8',
                                 font: {
-                                    size: 12
+                                    size: tickFontSize
                                 },
                                 callback: function(value) {
                                     return '$' + value.toFixed(0);
@@ -1631,9 +1667,30 @@
                 parsedData.push({ ...row, isIncome });
             }
 
+            // Ask user to specify type if no type column detected
+            let userSpecifiedType = null;
+            if (columnMap.type === -1) {
+                const typeChoice = confirm(
+                    `No "Type" column detected in CSV.\n\n` +
+                    `Are these EXPENSES?\n\n` +
+                    `• Click OK for EXPENSES 💸\n` +
+                    `• Click Cancel for INCOME 💰`
+                );
+                userSpecifiedType = typeChoice ? 'expense' : 'income';
+                
+                // Override all items with user's choice
+                parsedData.forEach(item => {
+                    item.isIncome = userSpecifiedType === 'income';
+                });
+            }
+
             // Show preview and confirmation
             const incomeCount = parsedData.filter(d => d.isIncome).length;
             const expenseCount = parsedData.filter(d => !d.isIncome).length;
+            
+            const typeInfo = userSpecifiedType 
+                ? `\n\nUser specified: ${userSpecifiedType === 'income' ? '💰 Income' : '💸 Expenses'}`
+                : '';
             
             const message = `Found ${parsedData.length} items:\n` +
                 `• ${incomeCount} income sources\n` +
@@ -1642,8 +1699,10 @@
                 `• Name: ${columnMap.name !== -1 ? '✓' : '✗'}\n` +
                 `• Amount: ${columnMap.amount !== -1 ? '✓' : '✗'}\n` +
                 `• Date: ${columnMap.date !== -1 ? '✓' : '✗'}\n` +
-                `• Frequency: ${columnMap.frequency !== -1 ? '✓' : '✗ (defaulting to monthly)'}\n\n` +
-                `Replace existing data or append to it?`;
+                `• Frequency: ${columnMap.frequency !== -1 ? '✓' : '✗ (defaulting to monthly)'}\n` +
+                `• Type: ${columnMap.type !== -1 ? '✓' : '✗ (user specified)'}` +
+                typeInfo +
+                `\n\nReplace existing data or append to it?`;
             
             const shouldReplace = confirm(message + '\n\nOK = Replace   |   Cancel = Append');
             
@@ -1820,6 +1879,19 @@
             currentBalance = parseFloat(this.value) || 0;
             saveData();
             updateAllViews();
+        });
+
+        // Redraw chart on window resize for mobile responsiveness
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Check if we're on the forecast page
+                const forecastPage = document.getElementById('forecast');
+                if (forecastPage && forecastPage.classList.contains('active')) {
+                    renderForecastPage();
+                }
+            }, 250);
         });
 
         // Initialize on page load
