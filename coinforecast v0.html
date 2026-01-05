@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Forecast</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            border: 2px solid #10b981;
+        }
+
+        .header h1 {
+            color: #10b981;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 1em;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: #475569;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #334155;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #0f172a;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        td input {
+            width: 100%;
+            padding: 6px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #e2e8f0;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: auto;
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .week-card {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #334155;
+            transition: transform 0.2s ease;
+        }
+
+        .week-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .week-card.surplus {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #1e293b 0%, #064e3b 100%);
+        }
+
+        .week-card.deficit {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #1e293b 0%, #7f1d1d 100%);
+        }
+
+        .week-header {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #10b981;
+        }
+
+        .week-stat {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .week-stat-label {
+            color: #94a3b8;
+        }
+
+        .week-stat-value {
+            font-weight: 600;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .action-plan {
+            margin-top: 20px;
+            padding: 20px;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 2px solid #10b981;
+        }
+
+        .action-plan h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+
+        .action-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: #1e293b;
+            border-left: 4px solid #10b981;
+            border-radius: 4px;
+        }
+
+        .full-width-panel {
+            grid-column: 1 / -1;
+        }
+
+        .deposit-schedule {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .deposit-day {
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .remove-deposit {
+            margin-left: 8px;
+            cursor: pointer;
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .expense-row-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪙 Coin Forecast</h1>
+            <p>Forecast Your Cash Flow • Optimize Debt Repayment • Take Control</p>
+        </div>
+
+        <div class="stats-row" id="statsRow">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="dashboard">
+            <!-- Cash & Inflow Panel -->
+            <div class="panel">
+                <h2>💰 Cash & Inflow</h2>
+                <div class="input-group">
+                    <label>Current Balance</label>
+                    <input type="number" id="currentBalance" placeholder="0.00" step="0.01">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="helpMeFinance()">
+                    🚀 Help Me Finance
+                </button>
+            </div>
+
+            <!-- Quick Stats Panel -->
+            <div class="panel">
+                <h2>📊 Quick Overview</h2>
+                <div id="quickStats">
+                    <div style="padding: 20px; text-align: center; color: #94a3b8;">
+                        Add debts and expenses to see your financial overview
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income & Deposits Panel -->
+        <div class="panel full-width-panel">
+            <h2>💵 Income & Deposits</h2>
+            <button class="btn btn-primary" onclick="addIncomeRow()">+ Add Income</button>
+            <button class="btn btn-secondary" onclick="saveData()">💾 Save</button>
+            
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table id="incomeTable">
+                    <thead>
+                        <tr>
+                            <th>Income Name</th>
+                            <th>Amount</th>
+                            <th>Deposit Date (Day)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incomeTableBody">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Expenses Panel -->
+        <div class="panel full-width-panel">
+            <h2>💳 Expenses</h2>
+            <button class="btn btn-primary" onclick="addExpenseRow()">+ Add Expense</button>
+            <button class="btn btn-secondary" onclick="saveData()">💾 Save</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All</button>
+            
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Expense Name</th>
+                            <th>Amount</th>
+                            <th>Due Date (Day)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Plan Panel -->
+        <div class="panel full-width-panel" id="actionPlanPanel" style="display: none;">
+            <div class="action-plan">
+                <h3>📝 Your Financial Summary</h3>
+                <div id="actionPlanContent">
+                    <!-- Action plan will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Forecast Panel -->
+        <div class="panel full-width-panel">
+            <h2>📅 Weekly Cash Flow Forecast (Next 6 Weeks)</h2>
+            
+            <!-- Chart -->
+            <div style="background: #0f172a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <canvas id="forecastChart" style="max-height: 400px;"></canvas>
+            </div>
+            
+            <div class="forecast-grid" id="forecastGrid">
+                <!-- Forecast cards will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expenses = [];
+        let incomes = [];
+        let currentBalance = 0;
+        let forecastChart = null;
+
+        // Initialize on load
+        window.onload = function() {
+            loadData();
+            updateUI();
+        };
+
+        function addIncomeRow() {
+            const income = {
+                id: Date.now(),
+                name: '',
+                amount: 0,
+                depositDate: 1
+            };
+            incomes.push(income);
+            renderIncomeTable();
+        }
+
+        function removeIncome(id) {
+            incomes = incomes.filter(i => i.id !== id);
+            renderIncomeTable();
+            saveData();
+            updateUI();
+        }
+
+        function renderIncomeTable() {
+            const tbody = document.getElementById('incomeTableBody');
+            tbody.innerHTML = incomes.map(income => `
+                <tr>
+                    <td><input type="text" value="${income.name}" onchange="updateIncome(${income.id}, 'name', this.value)"></td>
+                    <td><input type="number" value="${income.amount}" step="0.01" onchange="updateIncome(${income.id}, 'amount', parseFloat(this.value))"></td>
+                    <td><input type="number" value="${income.depositDate}" min="1" max="31" onchange="updateIncome(${income.id}, 'depositDate', parseInt(this.value))"></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="removeIncome(${income.id})">Remove</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateIncome(id, field, value) {
+            const income = incomes.find(i => i.id === id);
+            if (income) {
+                income[field] = value;
+                saveData();
+                updateUI();
+            }
+        }
+
+        function addExpenseRow() {
+            const expense = {
+                id: Date.now(),
+                name: '',
+                amount: 0,
+                dueDate: 1
+            };
+            expenses.push(expense);
+            renderExpenseTable();
+        }
+
+        function removeExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            renderExpenseTable();
+            saveData();
+            updateUI();
+        }
+
+        function renderExpenseTable() {
+            const tbody = document.getElementById('expenseTableBody');
+            tbody.innerHTML = expenses.map(expense => `
+                <tr>
+                    <td><input type="text" value="${expense.name}" onchange="updateExpense(${expense.id}, 'name', this.value)"></td>
+                    <td><input type="number" value="${expense.amount}" step="0.01" onchange="updateExpense(${expense.id}, 'amount', parseFloat(this.value))"></td>
+                    <td><input type="number" value="${expense.dueDate}" min="1" max="31" onchange="updateExpense(${expense.id}, 'dueDate', parseInt(this.value))"></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="removeExpense(${expense.id})">Remove</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateExpense(id, field, value) {
+            const expense = expenses.find(e => e.id === id);
+            if (expense) {
+                expense[field] = value;
+                saveData();
+                updateUI();
+            }
+        }
+
+        function saveData() {
+            currentBalance = parseFloat(document.getElementById('currentBalance').value) || 0;
+            localStorage.setItem('cashRhythm', JSON.stringify({
+                expenses,
+                incomes,
+                currentBalance
+            }));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('cashRhythm');
+            if (saved) {
+                const data = JSON.parse(saved);
+                expenses = data.expenses || [];
+                incomes = data.incomes || [];
+                currentBalance = data.currentBalance || 0;
+                document.getElementById('currentBalance').value = currentBalance;
+                renderIncomeTable();
+                renderExpenseTable();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                localStorage.removeItem('cashRhythm');
+                expenses = [];
+                incomes = [];
+                currentBalance = 0;
+                document.getElementById('currentBalance').value = '';
+                renderIncomeTable();
+                renderExpenseTable();
+                updateUI();
+            }
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
+        }
+
+        function adjustDueDateForMonth(dueDay, year, month) {
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            return Math.min(dueDay, lastDay);
+        }
+
+        function generateForecast() {
+            const forecast = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let runningBalance = currentBalance;
+
+            for (let i = 0; i < 6; i++) {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() + (i * 7));
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+
+                let outflow = 0;
+                let inflow = 0;
+                const expensesThisWeek = [];
+
+                // Calculate outflow (expenses due this week)
+                expenses.forEach(expense => {
+                    if (expense.amount > 0) {
+                        // Check if due date falls in this week
+                        const year = weekStart.getFullYear();
+                        const month = weekStart.getMonth();
+                        
+                        for (let checkMonth = month; checkMonth <= month + 1; checkMonth++) {
+                            const adjustedDay = adjustDueDateForMonth(expense.dueDate, year, checkMonth);
+                            const dueDate = new Date(year, checkMonth, adjustedDay);
+                            
+                            if (dueDate >= weekStart && dueDate <= weekEnd) {
+                                outflow += expense.amount;
+                                expensesThisWeek.push({
+                                    name: expense.name,
+                                    amount: expense.amount,
+                                    date: dueDate
+                                });
+                            }
+                        }
+                    }
+                });
+
+                // Calculate inflow (deposits this week)
+                incomes.forEach(income => {
+                    if (income.amount > 0 && income.depositDate) {
+                        const year = weekStart.getFullYear();
+                        const month = weekStart.getMonth();
+                        
+                        for (let checkMonth = month; checkMonth <= month + 1; checkMonth++) {
+                            const adjustedDay = adjustDueDateForMonth(income.depositDate, year, checkMonth);
+                            const depositDate = new Date(year, checkMonth, adjustedDay);
+                            
+                            if (depositDate >= weekStart && depositDate <= weekEnd) {
+                                inflow += income.amount;
+                            }
+                        }
+                    }
+                });
+
+                const net = inflow - outflow;
+                const startingBalance = runningBalance;
+                runningBalance += net;
+
+                forecast.push({
+                    weekNumber: i + 1,
+                    weekStart,
+                    weekEnd,
+                    outflow,
+                    inflow,
+                    net: net,
+                    startingBalance: startingBalance,
+                    endingBalance: runningBalance,
+                    expenses: expensesThisWeek
+                });
+            }
+
+            return forecast;
+        }
+
+        function renderForecast() {
+            const forecast = generateForecast();
+            const grid = document.getElementById('forecastGrid');
+            
+            grid.innerHTML = forecast.map(week => {
+                const status = week.net >= 0 ? 'surplus' : 'deficit';
+                const netClass = week.net >= 0 ? 'positive' : 'negative';
+                const balanceClass = week.endingBalance >= 0 ? 'positive' : 'negative';
+                
+                return `
+                    <div class="week-card ${status}">
+                        <div class="week-header">
+                            Week ${week.weekNumber}
+                            <div style="font-size: 0.85em; color: #94a3b8; margin-top: 5px;">
+                                ${week.weekStart.toLocaleDateString('en-US')} - ${week.weekEnd.toLocaleDateString('en-US')}
+                            </div>
+                        </div>
+                        <div class="week-stat">
+                            <span class="week-stat-label">Starting Balance:</span>
+                            <span class="week-stat-value ${week.startingBalance >= 0 ? 'positive' : 'negative'}">$${week.startingBalance.toFixed(2)}</span>
+                        </div>
+                        <div class="week-stat">
+                            <span class="week-stat-label">Income:</span>
+                            <span class="week-stat-value positive">+$${week.inflow.toFixed(2)}</span>
+                        </div>
+                        <div class="week-stat">
+                            <span class="week-stat-label">Expenses:</span>
+                            <span class="week-stat-value negative">-$${week.outflow.toFixed(2)}</span>
+                        </div>
+                        <div class="week-stat" style="border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
+                            <span class="week-stat-label"><strong>Net Change:</strong></span>
+                            <span class="week-stat-value ${netClass}"><strong>$${week.net.toFixed(2)}</strong></span>
+                        </div>
+                        <div class="week-stat" style="background: ${week.endingBalance >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; padding: 8px; border-radius: 4px; margin-top: 8px;">
+                            <span class="week-stat-label"><strong>Ending Balance:</strong></span>
+                            <span class="week-stat-value ${balanceClass}"><strong>$${week.endingBalance.toFixed(2)}</strong></span>
+                        </div>
+                        ${week.expenses.length > 0 ? `
+                            <div style="margin-top: 12px; font-size: 0.85em; color: #94a3b8;">
+                                <strong>Due:</strong>
+                                ${week.expenses.map(e => `<div>• ${e.name} - $${e.amount.toFixed(2)}</div>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Render the chart
+            renderForecastChart(forecast);
+        }
+
+        function helpMeFinance() {
+            saveData();
+            
+            // Calculate total monthly income from all income sources
+            const totalMonthlyIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            
+            if (totalMonthlyIncome === 0) {
+                alert('Please add income sources first!');
+                return;
+            }
+            
+            // Calculate total expenses
+            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const availableExtra = totalMonthlyIncome - totalExpenses;
+
+            const actionPlan = [];
+
+            actionPlan.push(`<div class="action-item">
+                <strong>💰 Total Monthly Income:</strong> $${totalMonthlyIncome.toFixed(2)}
+            </div>`);
+
+            actionPlan.push(`<div class="action-item">
+                <strong>💳 Total Expenses:</strong> $${totalExpenses.toFixed(2)}
+            </div>`);
+
+            if (availableExtra >= 0) {
+                actionPlan.push(`<div class="action-item" style="border-color: #10b981;">
+                    <strong>✨ Monthly Surplus:</strong> $${availableExtra.toFixed(2)}
+                    <div style="margin-top: 8px; color: #94a3b8; font-size: 0.9em;">
+                        Great! You have extra funds available. Consider:
+                        <ul style="margin-top: 4px; margin-left: 20px;">
+                            <li>Building an emergency fund</li>
+                            <li>Paying down high-interest debt</li>
+                            <li>Investing for the future</li>
+                        </ul>
+                    </div>
+                </div>`);
+            } else {
+                actionPlan.push(`<div class="action-item" style="border-color: #ef4444;">
+                    <strong>⚠️ Monthly Deficit:</strong> $${Math.abs(availableExtra).toFixed(2)}
+                    <div style="margin-top: 8px; color: #94a3b8; font-size: 0.9em;">
+                        Your expenses exceed your income. Consider:
+                        <ul style="margin-top: 4px; margin-left: 20px;">
+                            <li>Reviewing expenses to find areas to cut</li>
+                            <li>Finding ways to increase income</li>
+                            <li>Prioritizing essential expenses</li>
+                        </ul>
+                    </div>
+                </div>`);
+            }
+
+            // Show breakdown
+            actionPlan.push(`<div class="action-item" style="margin-top: 20px;">
+                <strong>📊 Income Breakdown:</strong>
+                ${incomes.map(inc => `<div style="margin-top: 4px;">• ${inc.name}: $${(inc.amount || 0).toFixed(2)}</div>`).join('')}
+            </div>`);
+
+            actionPlan.push(`<div class="action-item">
+                <strong>📋 Expense Breakdown:</strong>
+                ${expenses.map(exp => `<div style="margin-top: 4px;">• ${exp.name}: $${(exp.amount || 0).toFixed(2)}</div>`).join('')}
+            </div>`);
+
+            document.getElementById('actionPlanContent').innerHTML = actionPlan.join('');
+            document.getElementById('actionPlanPanel').style.display = 'block';
+            document.getElementById('actionPlanPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateQuickStats() {
+            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const netMonthly = totalIncome - totalExpenses;
+
+            const stats = `
+                <div style="padding: 15px;">
+                    <div class="week-stat">
+                        <span class="week-stat-label">Current Balance:</span>
+                        <span class="week-stat-value ${currentBalance >= 0 ? 'positive' : 'negative'}">$${currentBalance.toFixed(2)}</span>
+                    </div>
+                    <div class="week-stat">
+                        <span class="week-stat-label">Total Income:</span>
+                        <span class="week-stat-value positive">$${totalIncome.toFixed(2)}</span>
+                    </div>
+                    <div class="week-stat">
+                        <span class="week-stat-label">Total Expenses:</span>
+                        <span class="week-stat-value negative">$${totalExpenses.toFixed(2)}</span>
+                    </div>
+                    <div class="week-stat" style="border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
+                        <span class="week-stat-label">Net Monthly:</span>
+                        <span class="week-stat-value ${netMonthly >= 0 ? 'positive' : 'negative'}">$${netMonthly.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('quickStats').innerHTML = stats;
+        }
+
+        function updateStatsRow() {
+            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const netMonthly = totalIncome - totalExpenses;
+
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Current Balance</div>
+                    <div class="stat-value ${currentBalance >= 0 ? 'positive' : 'negative'}">$${currentBalance.toFixed(0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Income</div>
+                    <div class="stat-value positive">$${totalIncome.toFixed(0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Expenses</div>
+                    <div class="stat-value negative">$${totalExpenses.toFixed(0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Net Monthly</div>
+                    <div class="stat-value ${netMonthly >= 0 ? 'positive' : 'negative'}">$${netMonthly.toFixed(0)}</div>
+                </div>
+            `;
+
+            document.getElementById('statsRow').innerHTML = statsHTML;
+        }
+
+        function updateUI() {
+            renderForecast();
+            updateQuickStats();
+            updateStatsRow();
+        }
+
+        function renderForecastChart(forecast) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+            
+            const labels = forecast.map(week => `Week ${week.weekNumber}`);
+            const balanceData = forecast.map(week => week.endingBalance);
+            const inflowData = forecast.map(week => week.inflow);
+            const outflowData = forecast.map(week => -week.outflow);
+            
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Balance',
+                            data: balanceData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Income',
+                            data: inflowData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Expenses',
+                            data: outflowData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '6-Week Cash Flow Projection',
+                            color: '#10b981',
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#10b981',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '$' + context.parsed.y.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: '#334155',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#334155',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            },
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Listen for current balance changes
+        document.getElementById('currentBalance').addEventListener('change', function() {
+            saveData();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
