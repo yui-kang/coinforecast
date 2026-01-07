@@ -69,10 +69,12 @@ export function init() {
             loadData();
             updateAllViews();
 
-            // Initialize slider gradient
-            const slider = document.getElementById('state.savingsPercent');
-            const percentage = (state.savingsPercent / 100) * 100;
-            slider.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
+            // Initialize slider gradient (guarded)
+            const slider = document.getElementById('savingsPercent');
+            if (slider) {
+                const percentage = (state.savingsPercent / 100) * 100;
+                slider.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
+            }
         }
 
 export function saveAllData() {
