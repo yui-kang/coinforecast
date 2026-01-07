@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Forecast</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <title>TaskCoin - Gamified Budget Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,1890 +12,2206 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-bg: #0f1419;
+            --secondary-bg: #1a1f2e;
+            --card-bg: #22293a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding-top: 70px;
+            padding: 0;
+            line-height: 1.6;
         }
 
-        /* Navigation Bar Styles */
-        nav {
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Navigation Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 20px;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #10b981;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            height: 100vh;
+            overflow-y: auto;
         }
 
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            height: 60px;
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .nav-brand {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #10b981;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .logo h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
         }
 
         .nav-menu {
-            display: flex;
-            gap: 5px;
             list-style: none;
         }
 
         .nav-item {
-            position: relative;
+            margin-bottom: 8px;
         }
 
         .nav-link {
-            display: block;
-            padding: 10px 20px;
-            color: #cbd5e1;
-            text-decoration: none;
-            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 500;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
         }
 
         .nav-link:hover {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
+            background: var(--secondary-bg);
+            color: var(--text-primary);
         }
 
         .nav-link.active {
-            background: #10b981;
+            background: var(--accent);
             color: white;
         }
 
-        .nav-toggle {
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            cursor: pointer;
-            padding: 8px;
+        .nav-link svg {
+            width: 20px;
+            height: 20px;
         }
 
-        .nav-toggle span {
-            display: block;
-            width: 25px;
-            height: 3px;
-            background: #10b981;
-            border-radius: 3px;
-            transition: all 0.3s ease;
+        /* Persistent Unlock Display in Sidebar */
+        .sidebar-unlock {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border-radius: 12px;
+            text-align: center;
         }
 
-        .nav-toggle.active span:nth-child(1) {
-            transform: rotate(45deg) translate(6px, 6px);
+        .sidebar-unlock-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .nav-toggle.active span:nth-child(2) {
-            opacity: 0;
+        .sidebar-unlock-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+            margin: 8px 0;
         }
 
-        .nav-toggle.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(6px, -6px);
+        .sidebar-unlock-potential {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
 
-        /* Mobile Navigation */
-        @media (max-width: 768px) {
-            .nav-toggle {
-                display: flex;
-            }
-
-            .nav-menu {
-                position: fixed;
-                top: 60px;
-                left: -100%;
-                width: 100%;
-                flex-direction: column;
-                background: rgba(15, 23, 42, 0.98);
-                backdrop-filter: blur(10px);
-                padding: 20px;
-                gap: 10px;
-                transition: left 0.3s ease;
-                border-bottom: 2px solid #10b981;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            }
-
-            .nav-menu.active {
-                left: 0;
-            }
-
-            .nav-link {
-                padding: 15px 20px;
-                text-align: center;
-            }
-        }
-
-        /* Page Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Main Content Area */
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
             padding: 20px;
         }
 
+        /* Page System */
         .page {
             display: none;
+            animation: fadeInUp 0.4s ease-out;
         }
 
         .page.active {
             display: block;
         }
 
-        /* Existing Styles */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 12px;
-            border: 2px solid #10b981;
+        /* Mobile Navigation Toggle */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .header h1 {
-            color: #10b981;
-            font-size: 2.5em;
+        .mobile-menu-btn svg {
+            width: 24px;
+            height: 24px;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .mobile-menu-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Backdrop for mobile sidebar */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        .sidebar-backdrop.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 999;
+                width: 280px;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 70px 16px 20px;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+            }
+
+            .allowance-amount {
+                font-size: 2rem;
+            }
+
+            .sidebar-unlock-amount {
+                font-size: 1.5rem;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .task-input-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .task-input-container input,
+            .task-input-container select,
+            .task-input-container button {
+                width: 100%;
+            }
+
+            .days-grid {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 6px;
+            }
+
+            .day-checkbox {
+                flex-direction: column;
+                padding: 8px 4px;
+                font-size: 0.75rem;
+                text-align: center;
+            }
+
+            .day-checkbox span {
+                font-size: 0.7rem;
+            }
+
+            .day-checkbox input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                margin-bottom: 2px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px 8px;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .task-item {
+                padding: 12px;
+            }
+
+            .task-item-header {
+                flex-wrap: wrap;
+            }
+
+            .task-item-body {
+                padding-left: 0;
+                margin-top: 8px;
+            }
+
+            .task-days {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .day-completion {
+                padding: 6px 8px;
+                font-size: 0.7rem;
+            }
+
+            .day-completion input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+            }
+
+            .priority-badge {
+                font-size: 0.65rem;
+                padding: 3px 6px;
+            }
+
+            .delete-btn {
+                padding: 6px;
+                font-size: 1rem;
+            }
+
+            button {
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
+
+            input[type="number"],
+            input[type="text"],
+            select {
+                padding: 14px;
+                font-size: 1rem;
+            }
+
+            input[type="range"] {
+                height: 10px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                width: 24px;
+                height: 24px;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 24px;
+                height: 24px;
+            }
+
+            .slider-labels {
+                font-size: 0.7rem;
+            }
+
+            .toggle {
+                width: 44px;
+                height: 24px;
+            }
+
+            .toggle::after {
+                width: 18px;
+                height: 18px;
+            }
+
+            .toggle.active::after {
+                transform: translateX(20px);
+            }
+
+            .days-selector {
+                padding: 12px;
+            }
+
+            .days-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .progress-text {
+                font-size: 0.8rem;
+            }
+
+            .unlock-display {
+                padding: 20px 16px;
+            }
+
+            /* Make sidebar overlay entire screen on mobile */
+            .sidebar.open {
+                width: 100%;
+            }
+
+            /* Better touch targets */
+            .nav-link {
+                padding: 16px;
+                font-size: 1.05rem;
+            }
+
+            .nav-link svg {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        /* Very small mobile devices */
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.3rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .days-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .day-checkbox {
+                padding: 10px 6px;
+            }
+
+            .allowance-amount {
+                font-size: 1.8rem;
+            }
+
+            .task-text {
+                font-size: 0.95rem;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
             margin-bottom: 10px;
         }
 
-        .header p {
-            color: #94a3b8;
-            font-size: 1.1em;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 968px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .nav-brand {
-                font-size: 1.2em;
-            }
-        }
-
-        .panel {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid #334155;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            overflow-x: auto;
+        .page-subtitle {
+            color: var(--text-secondary);
         }
 
         @media (max-width: 768px) {
-            .panel {
-                padding: 15px;
+            .page-header {
+                margin-bottom: 20px;
             }
         }
 
-        .panel h2 {
-            color: #10b981;
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px var(--shadow);
+            border: 1px solid var(--border);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
             margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #334155;
-            padding-bottom: 10px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .input-group {
-            margin-bottom: 15px;
+        .icon {
+            width: 24px;
+            height: 24px;
         }
 
-        .input-group label {
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
             display: block;
-            margin-bottom: 5px;
-            color: #cbd5e1;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             font-weight: 500;
         }
 
-        .input-group input,
-        .input-group select {
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                font-size: 0.95rem;
+                margin-bottom: 10px;
+            }
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
             width: 100%;
-            padding: 10px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            color: #e2e8f0;
-            font-size: 1em;
+            padding: 12px 16px;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
         }
 
-        .input-group input:focus,
-        .input-group select:focus {
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, 
+                var(--success) 0%, 
+                var(--accent) 50%, 
+                var(--warning) 100%);
+            border: 2px solid var(--border);
+            border-radius: 4px;
             outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            -webkit-appearance: none;
+            cursor: pointer;
         }
 
-        .btn {
-            padding: 12px 24px;
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s;
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 1em;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 5px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
         }
 
-        .btn-primary {
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #059669;
+        button:hover {
+            background: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         .btn-secondary {
-            background: #475569;
-            color: white;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border);
         }
 
         .btn-secondary:hover {
-            background: #334155;
+            background: var(--border);
+            border-color: var(--accent);
         }
 
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-unsaved {
-            background: #f59e0b !important;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            overflow-x: auto;
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            table {
-                font-size: 0.9em;
-            }
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-        }
-
-        th {
-            background: #0f172a;
-            color: #10b981;
-            font-weight: 600;
-        }
-
-        td input {
-            width: 100%;
-            padding: 6px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 4px;
-            color: #e2e8f0;
-        }
-
-        .checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .checkbox-wrapper input[type="checkbox"] {
-            width: auto;
-        }
-
-        /* Stats Row */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid #334155;
+        .unlock-display {
             text-align: center;
-            transition: transform 0.2s ease;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border-radius: 12px;
+            margin: 20px 0;
         }
 
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: #10b981;
+        .allowance-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--success);
+            margin: 10px 0;
+            animation: pulse 2s ease-in-out infinite;
         }
 
-        .stat-label {
-            color: #94a3b8;
-            font-size: 0.9em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .potential-amount {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
         }
 
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #10b981;
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--secondary-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 20px 0;
         }
 
-        .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .week-card {
-            background: #1e293b;
-            border-radius: 8px;
-            padding: 20px;
-            border: 2px solid #334155;
-            transition: transform 0.2s ease;
-            min-height: 200px;
-        }
-
-        .week-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .week-card.surplus {
-            border-color: #10b981;
-            background: linear-gradient(135deg, #1e293b 0%, #064e3b 100%);
-        }
-
-        .week-card.deficit {
-            border-color: #ef4444;
-            background: linear-gradient(135deg, #1e293b 0%, #7f1d1d 100%);
-        }
-
-        .week-header {
-            font-size: 1.1em;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #10b981;
-        }
-
-        .week-stat {
-            margin: 8px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .week-stat-label {
-            color: #94a3b8;
-        }
-
-        .week-stat-value {
-            font-weight: 600;
-        }
-
-        .positive {
-            color: #10b981;
-        }
-
-        .negative {
-            color: #ef4444;
-        }
-
-        .action-item {
-            background: rgba(16, 185, 129, 0.05);
-            border-left: 4px solid #10b981;
-            padding: 15px;
-            margin: 15px 0;
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--success) 100%);
+            transition: width 0.5s ease;
             border-radius: 6px;
         }
 
-        .warning-box {
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px solid #ef4444;
+        .progress-text {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .task-input-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .task-input-container input {
+            flex: 1;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: var(--secondary-bg);
             border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
         }
 
-        .warning-box h3 {
-            color: #ef4444;
-            margin-bottom: 15px;
+        .task-item:hover {
+            background: var(--border);
         }
 
-        .success-box {
+        .task-item.completed {
+            opacity: 0.7;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        #todayPage .task-item.completed {
             background: rgba(16, 185, 129, 0.1);
-            border: 2px solid #10b981;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            border-left: 3px solid var(--success);
         }
 
-        .success-box h3 {
-            color: #10b981;
-            margin-bottom: 15px;
+        #todayPage .task-item {
+            border-left: 3px solid transparent;
         }
 
-        /* Chart Container */
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin: 20px 0;
-            width: 100%;
+        /* Date Navigation Styles */
+        .date-navigator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .nav-date-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border);
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .nav-date-btn:hover {
+            background: var(--border);
+        }
+
+        .nav-date-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .current-date-display {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .retroactive-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--warning);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--warning);
+            margin-left: 8px;
+        }
+
+        .retroactive-badge svg {
+            width: 12px;
+            height: 12px;
         }
 
         @media (max-width: 768px) {
-            .chart-container {
-                height: 300px;
-                margin: 10px 0;
+            .date-navigator {
+                gap: 8px;
             }
-            
-            .chart-container canvas {
-                max-width: 100%;
-                height: auto !important;
+
+            .nav-date-btn {
+                padding: 12px 12px;
+                font-size: 0.85rem;
+                min-width: 90px;
+            }
+
+            .nav-date-btn span {
+                display: none;
+            }
+
+            .current-date-display {
+                font-size: 0.95rem;
+            }
+
+            .retroactive-badge {
+                font-size: 0.65rem;
+                padding: 3px 6px;
             }
         }
 
-        @media (max-width: 480px) {
-            .chart-container {
-                height: 250px;
+        .checkbox-container {
+            position: relative;
+            margin-right: 16px;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        input[type="checkbox"]:checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @media (max-width: 768px) {
+            input[type="checkbox"] {
+                width: 26px;
+                height: 26px;
+            }
+
+            input[type="checkbox"]:checked::after {
+                font-size: 18px;
             }
         }
 
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid #334155;
-            border-top: 4px solid #10b981;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+        .task-text {
+            flex: 1;
+            color: var(--text-primary);
+            font-size: 1rem;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .delete-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 8px;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            transform: none;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        .priority-easy {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .priority-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .priority-hard {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            width: 100%;
+            margin-top: 20px;
+            opacity: 0.5;
+        }
+
+        .btn-reset:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            opacity: 0.7;
+        }
+
+        .task-input-container select {
+            width: auto;
+            min-width: 120px;
+        }
+
+        .days-selector {
+            background: var(--secondary-bg);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 2px solid var(--border);
+        }
+
+        .days-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .days-header label {
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .everyday-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .everyday-toggle input[type="checkbox"] {
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .everyday-toggle {
+                font-size: 0.95rem;
+                padding: 8px;
+                background: var(--card-bg);
+                border-radius: 6px;
+            }
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+        }
+
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .day-checkbox:hover {
+            background: var(--border);
+        }
+
+        .day-checkbox input[type="checkbox"] {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+        }
+
+        .day-checkbox.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--accent);
+        }
+
+        .task-days {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-left: 8px;
+            flex: 1;
+        }
+
+        .day-completion {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: var(--secondary-bg);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .day-completion input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .day-completion.completed {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .day-completion.completed.retroactive {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--warning);
+        }
+
+        .day-completion.completed.retroactive::after {
+            content: '🕐';
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            font-size: 10px;
+        }
+
+        .task-item-header {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .task-item-body {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding-left: 32px;
+        }
+
+        .task-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: var(--secondary-bg);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .allowance-amount {
+                font-size: 2.5rem;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .task-input-container {
+                flex-direction: column;
+            }
+        }
+
+        .calculate-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .highlight {
+            animation: highlight 0.6s ease-out;
+        }
+
+        @keyframes highlight {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+                color: var(--warning);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav>
-        <div class="nav-container">
-            <div class="nav-brand">
-                💰 Coin Forecast
+    <!-- Sidebar Backdrop (for mobile) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </button>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <h1>💰 TaskCoin</h1>
+                <p class="subtitle" style="font-size: 0.85rem;">Gamified Budget Tracker</p>
             </div>
-            <div class="nav-toggle" id="navToggle">
-                <span></span>
-                <span></span>
-                <span></span>
+
+            <!-- Persistent Unlock Display -->
+            <div class="sidebar-unlock">
+                <div class="sidebar-unlock-label">Currently Unlocked</div>
+                <div class="sidebar-unlock-amount" id="sidebarUnlocked">$0.00</div>
+                <div class="sidebar-unlock-potential">of <span id="sidebarPotential">$0.00</span></div>
             </div>
-            <ul class="nav-menu" id="navMenu">
+
+            <!-- Navigation Menu -->
+            <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
+                    <button class="nav-link active" data-page="budget">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Budget Calculator
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="forecast">Forecast</a>
+                    <button class="nav-link" data-page="tasks">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Weekly Tasks
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="config">Configuration</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="action">Action Plan</a>
+                    <button class="nav-link" data-page="today">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Today's Tasks
+                    </button>
                 </li>
             </ul>
-        </div>
-    </nav>
+        </aside>
 
-    <div class="container">
-        <!-- Dashboard Page -->
-        <div id="dashboard" class="page active">
-            <div class="header">
-                <h1>💰 Financial Dashboard</h1>
-                <p>Your Financial Overview at a Glance</p>
-            </div>
-
-            <!-- Stats Row -->
-            <div class="stats-row" id="statsRow"></div>
-
-            <!-- Quick Summary Panel -->
-            <div class="panel">
-                <h2>📊 Financial Summary</h2>
-                <div id="quickStats"></div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="panel" style="margin-top: 20px;">
-                <h2>📈 Quick Actions</h2>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="navigateToPage('config')">⚙️ Configure Income & Expenses</button>
-                    <button class="btn btn-primary" onclick="navigateToPage('forecast')">📊 View Forecast</button>
-                    <button class="btn btn-secondary" onclick="generateActionPlan(); navigateToPage('action')">🎯 Generate Action Plan</button>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Budget Calculator Page -->
+            <div class="page active" id="budgetPage">
+                <div class="page-header">
+                    <h2 class="page-title">Budget Calculator</h2>
+                    <p class="page-subtitle">Set up your weekly allowance budget</p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Forecast Page -->
-        <div id="forecast" class="page">
-            <div class="header">
-                <h1>📊 6-Week Forecast</h1>
-                <p>Projected Cash Flow Analysis</p>
-            </div>
-
-            <!-- Chart Panel -->
-            <div class="panel">
-                <h2>Cash Flow Projection</h2>
-                <div class="chart-container">
-                    <canvas id="forecastChart"></canvas>
+                <!-- Budget Calculator Card -->
+                <div class="card">
+                    <h2 class="card-title">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Budget Settings
+                    </h2>
+            
+            <div class="input-grid">
+                <div class="form-group">
+                    <label for="balance">Current Balance ($)</label>
+                    <input type="number" id="balance" placeholder="0.00" step="0.01">
                 </div>
-            </div>
-
-            <!-- Forecast Grid -->
-            <div class="panel" style="margin-top: 20px;">
-                <h2>Weekly Breakdown</h2>
-                <div class="forecast-grid" id="forecastGrid"></div>
-            </div>
-        </div>
-
-        <!-- Configuration Page -->
-        <div id="config" class="page">
-            <div class="header">
-                <h1>⚙️ Configuration</h1>
-                <p>Manage Your Income and Expenses</p>
-            </div>
-
-            <div class="dashboard">
-                <!-- Current Balance Panel -->
-                <div class="panel">
-                    <h2>💵 Current Balance</h2>
-                    <div class="input-group">
-                        <label for="currentBalance">Starting Balance ($)</label>
-                        <input type="number" id="currentBalance" step="0.01" value="0">
+                <div class="form-group">
+                    <label for="inflow">Estimated Cash Inflow ($)</label>
+                    <input type="number" id="inflow" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="outflow">Estimated Cash Outflow ($)</label>
+                    <input type="number" id="outflow" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="savings">
+                        Target Savings 
+                        <span id="savingsPercentDisplay" style="color: var(--accent); font-weight: 700;">0%</span>
+                        <span id="savingsAmountDisplay" style="color: var(--text-secondary);">($0.00)</span>
+                    </label>
+                    <input type="range" id="savings" min="0" max="100" value="0" step="1">
+                    <div class="slider-labels">
+                        <span>0%</span>
+                        <span>25%</span>
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span>100%</span>
                     </div>
                 </div>
-
-                <!-- Quick Stats -->
-                <div class="panel">
-                    <h2>📊 Quick Stats</h2>
-                    <div id="quickStatsConfig"></div>
-                </div>
-
-                <!-- Income Configuration -->
-                <div class="panel">
-                    <h2>💰 Income Configuration</h2>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button class="btn btn-primary" onclick="addIncome()">+ Add Income Source</button>
-                        <button class="btn btn-secondary" onclick="saveIncomeData()" id="saveIncomeBtn">💾 Save Income</button>
-                    </div>
-                    <table id="incomeTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Amount ($)</th>
-                                <th>Frequency</th>
-                                <th>Next Date</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Expense Configuration -->
-                <div class="panel">
-                    <h2>💸 Expense Configuration</h2>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button class="btn btn-primary" onclick="addExpense()">+ Add Expense</button>
-                        <button class="btn btn-secondary" onclick="saveExpenseData()" id="saveExpenseBtn">💾 Save Expenses</button>
-                    </div>
-                    <table id="expenseTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Amount ($)</th>
-                                <th>Frequency</th>
-                                <th>Next Date</th>
-                                <th>Essential</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="saveAllData()" id="saveAllBtn">💾 Save All Changes</button>
-                <button class="btn btn-secondary" onclick="exportData()">📥 Export Data</button>
-                <button class="btn btn-secondary" onclick="importData()">📤 Import Data</button>
-                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+            <div class="toggle-container">
+                <div class="toggle" id="manualToggle"></div>
+                <label style="margin: 0; cursor: pointer;" for="manualToggle">Use Manual Survival Allowance</label>
             </div>
+
+            <div class="form-group" id="manualAllowanceGroup" style="display: none;">
+                <label for="manualAllowance">Manual Allowance ($)</label>
+                <input type="number" id="manualAllowance" placeholder="0.00" step="0.01">
+            </div>
+
+            <button class="calculate-btn" id="calculateBtn">Calculate Allowance</button>
         </div>
 
-        <!-- Action Plan Page -->
-        <div id="action" class="page">
-            <div class="header">
-                <h1>🎯 Action Plan</h1>
-                <p>Personalized Financial Recommendations</p>
+        <!-- Progress Overview Card -->
+        <div class="card">
+            <h2 class="card-title">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Progress Overview
+            </h2>
+            
+            <div class="unlock-display">
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">WEEKLY PROGRESS</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                <p class="progress-text" id="progressText">0 of 0 days completed (0%)</p>
             </div>
 
-            <div class="panel">
-                <button class="btn btn-primary" onclick="generateActionPlan()" style="margin-bottom: 20px;">
-                    🔄 Regenerate Action Plan
-                </button>
-                <div id="actionPlanContent">
-                    <p style="color: #94a3b8; text-align: center; padding: 40px;">
-                        Click "Generate Action Plan" to get personalized financial recommendations.
-                    </p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Days Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completionRate">0%</div>
+                    <div class="stat-label">Completion Rate</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Weekly Tasks Page -->
+    <div class="page" id="tasksPage">
+        <div class="page-header">
+            <h2 class="page-title">Weekly Tasks</h2>
+            <p class="page-subtitle">Schedule your tasks for the week</p>
+        </div>
+        <div class="card">
+            <h2 class="card-title">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Weekly Tasks
+            </h2>
+
+            <div class="days-selector">
+                <div class="days-header">
+                    <label>Schedule Days</label>
+                    <label class="everyday-toggle">
+                        <input type="checkbox" id="everydayToggle">
+                        <span>Everyday</span>
+                    </label>
+                </div>
+                <div class="days-grid">
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Sun">
+                        <span>Sun</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Mon">
+                        <span>Mon</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Tue">
+                        <span>Tue</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Wed">
+                        <span>Wed</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Thu">
+                        <span>Thu</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Fri">
+                        <span>Fri</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-check" value="Sat">
+                        <span>Sat</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="task-input-container">
+                <input type="text" id="taskInput" placeholder="Add a new task...">
+                <select id="taskPriority">
+                    <option value="easy">Easy (1x)</option>
+                    <option value="medium" selected>Medium (2x)</option>
+                    <option value="hard">Hard (3x)</option>
+                </select>
+                <button id="addTaskBtn">Add Task</button>
+            </div>
+
+            <ul class="task-list" id="taskList">
+                <!-- Tasks will be added here dynamically -->
+            </ul>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <p>📝 No tasks yet. Add your first task to get started!</p>
+            </div>
+
+            <button class="btn-reset" id="resetWeekBtn">🔄 Reset for New Week</button>
+        </div>
+    </div>
+
+    <!-- Today's Tasks Page -->
+    <div class="page" id="todayPage">
+        <div class="page-header">
+            <h2 class="page-title">Today's Tasks</h2>
+            <p class="page-subtitle" id="todayDate">Complete today's scheduled tasks</p>
+        </div>
+
+        <!-- Date Navigation -->
+        <div class="card" style="padding: 16px;">
+            <div class="date-navigator">
+                <button class="nav-date-btn" id="prevDayBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Previous</span>
+                </button>
+                <div class="current-date-display">
+                    <span id="navDateDisplay">Today</span>
+                </div>
+                <button class="nav-date-btn" id="nextDayBtn">
+                    <span>Next</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Tasks for <span id="todayDayName">Today</span>
+            </h2>
+
+            <ul class="task-list" id="todayTaskList">
+                <!-- Today's tasks will be added here dynamically -->
+            </ul>
+
+            <div class="empty-state" id="todayEmptyState" style="display: none;">
+                <p>🎉 No tasks scheduled for today! Enjoy your free time.</p>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
     <script>
-        // Global Variables
-        let incomes = [];
-        let expenses = [];
-        let currentBalance = 0;
-        let forecastChart = null;
-        let hasUnsavedIncomes = false;
-        let hasUnsavedExpenses = false;
+        // State management
+        let state = {
+            budget: {
+                balance: 0,
+                inflow: 0,
+                outflow: 0,
+                savingsPercent: 0,
+                manualMode: false,
+                manualAllowance: 0,
+                potentialAllowance: 0
+            },
+            tasks: [],
+            lastCompletionPercentage: 0,
+            viewingDate: null // null means "today"
+        };
 
-        // Navigation Logic
-        const navToggle = document.getElementById('navToggle');
-        const navMenu = document.getElementById('navMenu');
+        // DOM elements
+        const balanceInput = document.getElementById('balance');
+        const inflowInput = document.getElementById('inflow');
+        const outflowInput = document.getElementById('outflow');
+        const savingsInput = document.getElementById('savings');
+        const savingsPercentDisplay = document.getElementById('savingsPercentDisplay');
+        const savingsAmountDisplay = document.getElementById('savingsAmountDisplay');
+        const manualToggle = document.getElementById('manualToggle');
+        const manualAllowanceGroup = document.getElementById('manualAllowanceGroup');
+        const manualAllowanceInput = document.getElementById('manualAllowance');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const taskInput = document.getElementById('taskInput');
+        const taskPriority = document.getElementById('taskPriority');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const resetWeekBtn = document.getElementById('resetWeekBtn');
+        const taskList = document.getElementById('taskList');
+        const emptyState = document.getElementById('emptyState');
+        const everydayToggle = document.getElementById('everydayToggle');
+        const dayChecks = document.querySelectorAll('.day-check');
+        const unlockedAmount = document.getElementById('unlockedAmount');
+        const potentialAmount = document.getElementById('potentialAmount');
+        const sidebarUnlocked = document.getElementById('sidebarUnlocked');
+        const sidebarPotential = document.getElementById('sidebarPotential');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const totalTasksEl = document.getElementById('totalTasks');
+        const completedTasksEl = document.getElementById('completedTasks');
+        const completionRateEl = document.getElementById('completionRate');
+        
+        // Navigation elements
         const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        const todayTaskList = document.getElementById('todayTaskList');
+        const todayEmptyState = document.getElementById('todayEmptyState');
+        const todayDate = document.getElementById('todayDate');
+        const todayDayName = document.getElementById('todayDayName');
+        const prevDayBtn = document.getElementById('prevDayBtn');
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        const navDateDisplay = document.getElementById('navDateDisplay');
 
-        navToggle.addEventListener('click', () => {
-            navToggle.classList.toggle('active');
-            navMenu.classList.toggle('active');
-        });
+        // Date navigation handlers
+        if (prevDayBtn) {
+            prevDayBtn.addEventListener('click', () => {
+                navigateDay(-1);
+            });
+        }
 
+        if (nextDayBtn) {
+            nextDayBtn.addEventListener('click', () => {
+                navigateDay(1);
+            });
+        }
+
+        // Navigate to different days
+        function navigateDay(offset) {
+            const currentDate = state.viewingDate ? new Date(state.viewingDate) : new Date();
+            currentDate.setDate(currentDate.getDate() + offset);
+            state.viewingDate = currentDate.toISOString().split('T')[0]; // Store as YYYY-MM-DD
+            renderTodayTasks();
+            updateDateNavigation();
+        }
+
+        // Update date navigation display
+        function updateDateNavigation() {
+            const viewDate = state.viewingDate ? new Date(state.viewingDate + 'T00:00:00') : new Date();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            viewDate.setHours(0, 0, 0, 0);
+
+            const isToday = viewDate.getTime() === today.getTime();
+            const isFuture = viewDate.getTime() > today.getTime();
+
+            // Update display text
+            if (isToday) {
+                navDateDisplay.textContent = 'Today';
+            } else {
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                navDateDisplay.textContent = viewDate.toLocaleDateString('en-US', options);
+            }
+
+            // Disable next button if viewing today or future
+            if (nextDayBtn) {
+                nextDayBtn.disabled = isToday || isFuture;
+            }
+        }
+
+        // Page Navigation
         navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageName = link.getAttribute('data-page');
-                navigateToPage(pageName);
+            link.addEventListener('click', () => {
+                const targetPage = link.getAttribute('data-page');
+                switchPage(targetPage);
+                
+                // Update active nav link
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
                 
                 // Close mobile menu
-                navToggle.classList.remove('active');
-                navMenu.classList.remove('active');
+                closeMobileMenu();
             });
         });
 
-        function navigateToPage(pageName) {
-            // Hide all pages
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
+        // Mobile menu toggle
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                toggleMobileMenu();
             });
+        }
 
-            // Show selected page
-            document.getElementById(pageName).classList.add('active');
-
-            // Update nav links
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('data-page') === pageName) {
-                    link.classList.add('active');
-                }
+        // Close mobile menu when clicking backdrop
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', () => {
+                closeMobileMenu();
             });
+        }
 
-            // Update specific page content
-            if (pageName === 'forecast') {
-                renderForecastPage();
-            } else if (pageName === 'dashboard') {
-                updateDashboard();
-            } else if (pageName === 'config') {
-                updateConfigPage();
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('open');
+            sidebarBackdrop.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            sidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('active');
+        }
+
+        // Switch page function
+        function switchPage(pageName) {
+            pages.forEach(page => page.classList.remove('active'));
+            
+            if (pageName === 'budget') {
+                document.getElementById('budgetPage').classList.add('active');
+            } else if (pageName === 'tasks') {
+                document.getElementById('tasksPage').classList.add('active');
+            } else if (pageName === 'today') {
+                document.getElementById('todayPage').classList.add('active');
+                // Reset to today when navigating to this page
+                state.viewingDate = null;
+                renderTodayTasks();
+            }
+        }
+
+        // Get current day
+        function getCurrentDay() {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const today = new Date();
+            return days[today.getDay()];
+        }
+
+        // Get formatted date
+        function getFormattedDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date().toLocaleDateString('en-US', options);
+        }
+
+        // Render today's tasks
+        function renderTodayTasks() {
+            const viewDate = state.viewingDate ? new Date(state.viewingDate + 'T00:00:00') : new Date();
+            const currentDay = getDayFromDate(viewDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            viewDate.setHours(0, 0, 0, 0);
+            
+            const isViewingToday = viewDate.getTime() === today.getTime();
+            const viewDateString = state.viewingDate || getTodayDateString();
+            
+            todayDayName.textContent = currentDay;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            todayDate.textContent = viewDate.toLocaleDateString('en-US', options);
+            
+            updateDateNavigation();
+            
+            const todaysTasks = state.tasks.filter(task => 
+                task.selectedDays && task.selectedDays.includes(currentDay)
+            );
+
+            if (todaysTasks.length === 0) {
+                todayTaskList.innerHTML = '';
+                todayEmptyState.style.display = 'block';
+                return;
             }
 
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Initialize
-        function init() {
-            loadData();
-            updateAllViews();
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem('cashFlowData');
-            if (saved) {
-                const data = JSON.parse(saved);
-                incomes = data.incomes || [];
-                expenses = data.expenses || [];
-                currentBalance = data.currentBalance || 0;
+            todayEmptyState.style.display = 'none';
+            todayTaskList.innerHTML = todaysTasks.map(task => {
+                const priorityLabel = task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Medium';
                 
-                document.getElementById('currentBalance').value = currentBalance;
-            }
-            renderIncomesTable();
-            renderExpensesTable();
-        }
-
-        function saveData() {
-            currentBalance = parseFloat(document.getElementById('currentBalance').value) || 0;
-            
-            const data = {
-                incomes,
-                expenses,
-                currentBalance,
-                lastSaved: new Date().toISOString()
-            };
-            
-            localStorage.setItem('cashFlowData', JSON.stringify(data));
-        }
-
-        function saveAllData() {
-            saveData();
-            
-            // Reset all unsaved flags
-            hasUnsavedIncomes = false;
-            hasUnsavedExpenses = false;
-            
-            // Update button states
-            const incomeBtn = document.getElementById('saveIncomeBtn');
-            if (incomeBtn) {
-                incomeBtn.classList.remove('btn-unsaved');
-                incomeBtn.textContent = '💾 Save Income';
-            }
-            
-            const expenseBtn = document.getElementById('saveExpenseBtn');
-            if (expenseBtn) {
-                expenseBtn.classList.remove('btn-unsaved');
-                expenseBtn.textContent = '💾 Save Expenses';
-            }
-            
-            const allBtn = document.getElementById('saveAllBtn');
-            if (allBtn) {
-                allBtn.classList.remove('btn-unsaved');
-                allBtn.textContent = '💾 Save All Changes';
-            }
-            
-            updateAllViews();
-            
-            // Show brief confirmation
-            if (allBtn) {
-                const originalText = allBtn.textContent;
-                allBtn.textContent = '✓ All Saved!';
-                setTimeout(() => {
-                    allBtn.textContent = originalText;
-                }, 1500);
-            }
-        }
-
-        function addIncome() {
-            incomes.push({
-                id: Date.now(),
-                name: '',
-                amount: 0,
-                frequency: 'monthly',
-                nextDate: new Date().toISOString().split('T')[0]
-            });
-            renderIncomesTable();
-        }
-
-        function removeIncome(id) {
-            if (confirm('Remove this income source?')) {
-                incomes = incomes.filter(inc => inc.id !== id);
-                renderIncomesTable();
-                saveData();
-                updateAllViews();
+                // Check if this day is completed
+                const isCompleted = task.completedDays && task.completedDays.includes(currentDay);
                 
-                // Clear unsaved flag since we just saved
-                hasUnsavedIncomes = false;
-                const btn = document.getElementById('saveIncomeBtn');
-                if (btn) {
-                    btn.classList.remove('btn-unsaved');
-                    btn.textContent = '💾 Save Income';
-                }
-            }
-        }
-
-        function addExpense() {
-            expenses.push({
-                id: Date.now(),
-                name: '',
-                amount: 0,
-                frequency: 'monthly',
-                nextDate: new Date().toISOString().split('T')[0],
-                isEssential: false
-            });
-            renderExpensesTable();
-        }
-
-        function removeExpense(id) {
-            if (confirm('Remove this expense?')) {
-                expenses = expenses.filter(exp => exp.id !== id);
-                renderExpensesTable();
-                saveData();
-                updateAllViews();
-                
-                // Clear unsaved flag since we just saved
-                hasUnsavedExpenses = false;
-                const btn = document.getElementById('saveExpenseBtn');
-                if (btn) {
-                    btn.classList.remove('btn-unsaved');
-                    btn.textContent = '💾 Save Expenses';
-                }
-            }
-        }
-
-        function renderIncomesTable() {
-            const tbody = document.querySelector('#incomeTable tbody');
-            tbody.innerHTML = incomes.map(inc => `
-                <tr>
-                    <td><input type="text" value="${inc.name || ''}" onchange="updateIncome(${inc.id}, 'name', this.value)"></td>
-                    <td><input type="number" step="0.01" value="${inc.amount || 0}" onchange="updateIncome(${inc.id}, 'amount', parseFloat(this.value))"></td>
-                    <td>
-                        <select onchange="updateIncome(${inc.id}, 'frequency', this.value)">
-                            <option value="weekly" ${inc.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
-                            <option value="biweekly" ${inc.frequency === 'biweekly' ? 'selected' : ''}>Bi-weekly</option>
-                            <option value="monthly" ${inc.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
-                        </select>
-                    </td>
-                    <td><input type="date" value="${inc.nextDate || ''}" onchange="updateIncome(${inc.id}, 'nextDate', this.value)"></td>
-                    <td><button class="btn btn-danger" onclick="removeIncome(${inc.id})">Remove</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function renderExpensesTable() {
-            const tbody = document.querySelector('#expenseTable tbody');
-            tbody.innerHTML = expenses.map(exp => `
-                <tr>
-                    <td><input type="text" value="${exp.name || ''}" onchange="updateExpense(${exp.id}, 'name', this.value)"></td>
-                    <td><input type="number" step="0.01" value="${exp.amount || 0}" onchange="updateExpense(${exp.id}, 'amount', parseFloat(this.value))"></td>
-                    <td>
-                        <select onchange="updateExpense(${exp.id}, 'frequency', this.value)">
-                            <option value="weekly" ${exp.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
-                            <option value="biweekly" ${exp.frequency === 'biweekly' ? 'selected' : ''}>Bi-weekly</option>
-                            <option value="monthly" ${exp.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
-                        </select>
-                    </td>
-                    <td><input type="date" value="${exp.nextDate || ''}" onchange="updateExpense(${exp.id}, 'nextDate', this.value)"></td>
-                    <td>
-                        <div class="checkbox-wrapper">
-                            <input type="checkbox" ${exp.isEssential ? 'checked' : ''} onchange="updateExpense(${exp.id}, 'isEssential', this.checked)">
-                        </div>
-                    </td>
-                    <td><button class="btn btn-danger" onclick="removeExpense(${exp.id})">Remove</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function updateIncome(id, field, value) {
-            const income = incomes.find(inc => inc.id === id);
-            if (income) {
-                income[field] = value;
-                
-                // Check if row is complete (has name, amount, and date)
-                const isComplete = income.name && income.name.trim() !== '' && 
-                                 income.amount > 0 && 
-                                 income.nextDate && income.nextDate !== '';
-                
-                if (isComplete) {
-                    // Auto-save complete rows
-                    saveData();
-                    updateAllViews();
-                } else {
-                    // Mark as unsaved for incomplete rows
-                    markIncomesUnsaved();
-                }
-            }
-        }
-
-        function updateExpense(id, field, value) {
-            const expense = expenses.find(exp => exp.id === id);
-            if (expense) {
-                expense[field] = value;
-                
-                // Check if row is complete (has name, amount, and date)
-                const isComplete = expense.name && expense.name.trim() !== '' && 
-                                 expense.amount > 0 && 
-                                 expense.nextDate && expense.nextDate !== '';
-                
-                if (isComplete) {
-                    // Auto-save complete rows
-                    saveData();
-                    updateAllViews();
-                } else {
-                    // Mark as unsaved for incomplete rows
-                    markExpensesUnsaved();
-                }
-            }
-        }
-
-        function markIncomesUnsaved() {
-            hasUnsavedIncomes = true;
-            const btn = document.getElementById('saveIncomeBtn');
-            if (btn) {
-                btn.classList.add('btn-unsaved');
-                btn.textContent = '💾 Save Income *';
-            }
-        }
-
-        function markExpensesUnsaved() {
-            hasUnsavedExpenses = true;
-            const btn = document.getElementById('saveExpenseBtn');
-            if (btn) {
-                btn.classList.add('btn-unsaved');
-                btn.textContent = '💾 Save Expenses *';
-            }
-        }
-
-        function saveIncomeData() {
-            saveData();
-            hasUnsavedIncomes = false;
-            const btn = document.getElementById('saveIncomeBtn');
-            if (btn) {
-                btn.classList.remove('btn-unsaved');
-                btn.textContent = '💾 Save Income';
-            }
-            updateAllViews();
-            
-            // Show brief confirmation
-            const originalText = btn.textContent;
-            btn.textContent = '✓ Saved!';
-            setTimeout(() => {
-                btn.textContent = originalText;
-            }, 1500);
-        }
-
-        function saveExpenseData() {
-            saveData();
-            hasUnsavedExpenses = false;
-            const btn = document.getElementById('saveExpenseBtn');
-            if (btn) {
-                btn.classList.remove('btn-unsaved');
-                btn.textContent = '💾 Save Expenses';
-            }
-            updateAllViews();
-            
-            // Show brief confirmation
-            const originalText = btn.textContent;
-            btn.textContent = '✓ Saved!';
-            setTimeout(() => {
-                btn.textContent = originalText;
-            }, 1500);
-        }
-
-        function calculateForecast() {
-            const forecast = [];
-            let balance = currentBalance;
-            const startDate = new Date();
-
-            for (let week = 1; week <= 6; week++) {
-                const weekStart = new Date(startDate);
-                weekStart.setDate(startDate.getDate() + (week - 1) * 7);
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-
-                let weekInflow = 0;
-                let weekOutflow = 0;
-                const itemsDue = [];
-
-                // Calculate income for this week
-                incomes.forEach(inc => {
-                    const nextDate = new Date(inc.nextDate);
-                    let isDue = false;
-
-                    // Check if this income is due during this week
-                    if (inc.frequency === 'weekly') {
-                        isDue = true; // Weekly income occurs every week
-                    } else if (inc.frequency === 'biweekly') {
-                        // Check if the nextDate falls within this week or every 2 weeks from nextDate
-                        const daysDiff = Math.floor((weekStart - nextDate) / (1000 * 60 * 60 * 24));
-                        isDue = daysDiff >= 0 && daysDiff % 14 < 7;
-                    } else if (inc.frequency === 'monthly') {
-                        // Check if nextDate falls within this week
-                        isDue = nextDate >= weekStart && nextDate <= weekEnd;
+                // Check completion metadata for retroactive indicator
+                let retroactiveBadge = '';
+                if (isCompleted && task.completionMeta && task.completionMeta[currentDay]) {
+                    const completedOnDate = task.completionMeta[currentDay];
+                    if (completedOnDate !== viewDateString) {
+                        const completedDate = new Date(completedOnDate + 'T00:00:00');
+                        const options = { month: 'short', day: 'numeric' };
+                        retroactiveBadge = `
+                            <span class="retroactive-badge" title="Completed on ${completedDate.toLocaleDateString('en-US', options)}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                ${completedDate.toLocaleDateString('en-US', options)}
+                            </span>
+                        `;
                     }
-
-                    if (isDue) {
-                        weekInflow += (inc.amount || 0);
-                        itemsDue.push({
-                            name: inc.name || 'Unnamed Income',
-                            amount: inc.amount || 0,
-                            type: 'income',
-                            date: nextDate
-                        });
-                    }
-                });
-
-                // Calculate expenses for this week
-                expenses.forEach(exp => {
-                    const nextDate = new Date(exp.nextDate);
-                    let isDue = false;
-
-                    // Check if this expense is due during this week
-                    if (exp.frequency === 'weekly') {
-                        isDue = true; // Weekly expense occurs every week
-                    } else if (exp.frequency === 'biweekly') {
-                        // Check if the nextDate falls within this week or every 2 weeks from nextDate
-                        const daysDiff = Math.floor((weekStart - nextDate) / (1000 * 60 * 60 * 24));
-                        isDue = daysDiff >= 0 && daysDiff % 14 < 7;
-                    } else if (exp.frequency === 'monthly') {
-                        // Check if nextDate falls within this week
-                        isDue = nextDate >= weekStart && nextDate <= weekEnd;
-                    }
-
-                    if (isDue) {
-                        weekOutflow += (exp.amount || 0);
-                        itemsDue.push({
-                            name: exp.name || 'Unnamed Expense',
-                            amount: exp.amount || 0,
-                            type: 'expense',
-                            date: nextDate,
-                            isEssential: exp.isEssential
-                        });
-                    }
-                });
-
-                const netChange = weekInflow - weekOutflow;
-                balance += netChange;
-
-                forecast.push({
-                    weekNumber: week,
-                    startDate: weekStart,
-                    endDate: weekEnd,
-                    inflow: weekInflow,
-                    outflow: weekOutflow,
-                    netChange: netChange,
-                    endingBalance: balance,
-                    itemsDue: itemsDue
-                });
-            }
-
-            return forecast;
-        }
-
-        function renderForecastPage() {
-            const forecast = calculateForecast();
-            
-            // Render chart
-            renderForecastChart(forecast);
-            
-            // Render forecast grid
-            const grid = document.getElementById('forecastGrid');
-            grid.innerHTML = forecast.map(week => {
-                const isDeficit = week.netChange < 0;
-                const statusClass = isDeficit ? 'deficit' : 'surplus';
-                
-                // Sort items by date
-                const sortedItems = week.itemsDue.sort((a, b) => a.date - b.date);
-                
-                // Format date range
-                const dateRange = `${week.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${week.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-                
-                // Create items due summary
-                const itemsSummary = sortedItems.length > 0 ? `
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #334155;">
-                        <div style="font-size: 0.9em; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Due This Week:</div>
-                        ${sortedItems.map(item => {
-                            const itemDate = item.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                            const itemClass = item.type === 'income' ? 'positive' : 'negative';
-                            const itemIcon = item.type === 'income' ? '💰' : '💸';
-                            const essentialBadge = item.type === 'expense' && item.isEssential ? '<span style="font-size: 0.75em; background: #ef4444; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">Essential</span>' : '';
-                            return `
-                                <div style="font-size: 0.85em; margin: 6px 0; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="color: #cbd5e1;">
-                                        ${itemIcon} ${item.name}
-                                        ${essentialBadge}
-                                    </span>
-                                    <span class="${itemClass}" style="font-weight: 600;">
-                                        ${item.type === 'income' ? '+' : '-'}$${item.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                                <div style="font-size: 0.75em; color: #64748b; margin-left: 20px; margin-top: -4px;">${itemDate}</div>
-                            `;
-                        }).join('')}
-                    </div>
-                ` : '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #334155; font-size: 0.85em; color: #64748b; text-align: center;">No items due this week</div>';
+                }
                 
                 return `
-                    <div class="week-card ${statusClass}">
-                        <div class="week-header">Week ${week.weekNumber}</div>
-                        <div style="font-size: 0.85em; color: #64748b; margin-bottom: 15px;">${dateRange}</div>
-                        <div class="week-stat">
-                            <span class="week-stat-label">Income:</span>
-                            <span class="week-stat-value positive">$${week.inflow.toFixed(2)}</span>
+                    <li class="task-item ${isCompleted ? 'completed' : ''}" data-id="${task.id}">
+                        <div class="task-item-header">
+                            <div class="checkbox-container">
+                                <input type="checkbox" 
+                                       ${isCompleted ? 'checked' : ''} 
+                                       onchange="toggleDayCompletionWithDate(${task.id}, '${currentDay}', '${viewDateString}')">
+                            </div>
+                            <span class="priority-badge priority-${task.priority || 'medium'}">${priorityLabel}</span>
+                            <span class="task-text">${task.text}</span>
+                            ${retroactiveBadge}
                         </div>
-                        <div class="week-stat">
-                            <span class="week-stat-label">Expenses:</span>
-                            <span class="week-stat-value negative">$${week.outflow.toFixed(2)}</span>
-                        </div>
-                        <div class="week-stat">
-                            <span class="week-stat-label">Net Change:</span>
-                            <span class="week-stat-value ${week.netChange >= 0 ? 'positive' : 'negative'}">
-                                ${week.netChange >= 0 ? '+' : ''}$${week.netChange.toFixed(2)}
-                            </span>
-                        </div>
-                        <div class="week-stat" style="border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
-                            <span class="week-stat-label">Ending Balance:</span>
-                            <span class="week-stat-value ${week.endingBalance >= 0 ? 'positive' : 'negative'}">
-                                $${week.endingBalance.toFixed(2)}
-                            </span>
-                        </div>
-                        ${itemsSummary}
-                    </div>
+                    </li>
                 `;
             }).join('');
         }
 
-        function renderForecastChart(forecast) {
-            const ctx = document.getElementById('forecastChart');
-            if (!ctx) return;
+        // Get day name from date object
+        function getDayFromDate(date) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            return days[date.getDay()];
+        }
+
+        // Get today's date string
+        function getTodayDateString() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        // Get the date string for a specific day of the current week
+        function getDateForDay(dayAbbr) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const today = new Date();
+            const currentDayIndex = today.getDay();
+            const targetDayIndex = days.indexOf(dayAbbr);
             
-            const chartCtx = ctx.getContext('2d');
+            if (targetDayIndex === -1) return getTodayDateString();
             
-            if (forecastChart) {
-                forecastChart.destroy();
-            }
+            const diff = targetDayIndex - currentDayIndex;
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + diff);
             
-            const labels = forecast.map(week => `Week ${week.weekNumber}`);
-            const balanceData = forecast.map(week => week.endingBalance);
-            const inflowData = forecast.map(week => week.inflow);
-            const outflowData = forecast.map(week => -week.outflow);
-            
-            // Responsive font sizes
-            const isMobile = window.innerWidth < 768;
-            const legendFontSize = isMobile ? 10 : 14;
-            const titleFontSize = isMobile ? 14 : 18;
-            const tickFontSize = isMobile ? 9 : 12;
-            
-            forecastChart = new Chart(chartCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Balance',
-                            data: balanceData,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: isMobile ? 4 : 6,
-                            pointHoverRadius: isMobile ? 6 : 8,
-                            pointBackgroundColor: '#10b981',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: 'Income',
-                            data: inflowData,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: isMobile ? 3 : 4,
-                            pointHoverRadius: isMobile ? 5 : 6
-                        },
-                        {
-                            label: 'Expenses',
-                            data: outflowData,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: isMobile ? 3 : 4,
-                            pointHoverRadius: isMobile ? 5 : 6
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                color: '#e2e8f0',
-                                font: {
-                                    size: legendFontSize,
-                                    weight: 'bold'
-                                },
-                                padding: isMobile ? 8 : 15,
-                                usePointStyle: true,
-                                boxWidth: isMobile ? 8 : 12,
-                                boxHeight: isMobile ? 8 : 12
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '6-Week Cash Flow Projection',
-                            color: '#10b981',
-                            font: {
-                                size: titleFontSize,
-                                weight: 'bold'
-                            },
-                            padding: isMobile ? 10 : 20
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleColor: '#10b981',
-                            bodyColor: '#e2e8f0',
-                            borderColor: '#334155',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: true,
-                            titleFont: {
-                                size: isMobile ? 11 : 13
-                            },
-                            bodyFont: {
-                                size: isMobile ? 10 : 12
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += '$' + context.parsed.y.toFixed(2);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '#334155',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                font: {
-                                    size: tickFontSize,
-                                    weight: 'bold'
-                                },
-                                maxRotation: isMobile ? 45 : 0,
-                                minRotation: isMobile ? 45 : 0
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '#334155',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                font: {
-                                    size: tickFontSize
-                                },
-                                callback: function(value) {
-                                    return '$' + value.toFixed(0);
-                                }
-                            },
-                            beginAtZero: false
-                        }
-                    }
+            return targetDate.toISOString().split('T')[0];
+        }
+
+        // Everyday toggle functionality
+        everydayToggle.addEventListener('change', () => {
+            const isChecked = everydayToggle.checked;
+            dayChecks.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                if (isChecked) {
+                    checkbox.parentElement.classList.add('selected');
+                } else {
+                    checkbox.parentElement.classList.remove('selected');
                 }
             });
-        }
+        });
 
-        function updateDashboard() {
-            updateStatsRow();
-            updateQuickStats();
-        }
-
-        function updateConfigPage() {
-            updateQuickStatsConfig();
-        }
-
-        function updateStatsRow() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
-            const netMonthly = totalIncome - totalExpenses;
-
-            const statsHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">Current Balance</div>
-                    <div class="stat-value ${currentBalance >= 0 ? 'positive' : 'negative'}">$${currentBalance.toFixed(0)}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Income</div>
-                    <div class="stat-value positive">$${totalIncome.toFixed(0)}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Expenses</div>
-                    <div class="stat-value negative">$${totalExpenses.toFixed(0)}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Net Monthly</div>
-                    <div class="stat-value ${netMonthly >= 0 ? 'positive' : 'negative'}">$${netMonthly.toFixed(0)}</div>
-                </div>
-            `;
-
-            document.getElementById('statsRow').innerHTML = statsHTML;
-        }
-
-        function updateQuickStats() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
-            const netMonthly = totalIncome - totalExpenses;
-
-            const stats = `
-                <div style="padding: 15px;">
-                    <div class="week-stat">
-                        <span class="week-stat-label">Current Balance:</span>
-                        <span class="week-stat-value ${currentBalance >= 0 ? 'positive' : 'negative'}">$${currentBalance.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat">
-                        <span class="week-stat-label">Total Income:</span>
-                        <span class="week-stat-value positive">$${totalIncome.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat">
-                        <span class="week-stat-label">Total Expenses:</span>
-                        <span class="week-stat-value negative">$${totalExpenses.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat" style="border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
-                        <span class="week-stat-label">Net Monthly:</span>
-                        <span class="week-stat-value ${netMonthly >= 0 ? 'positive' : 'negative'}">$${netMonthly.toFixed(2)}</span>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('quickStats').innerHTML = stats;
-        }
-
-        function updateQuickStatsConfig() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
-            const netMonthly = totalIncome - totalExpenses;
-
-            const stats = `
-                <div style="padding: 15px;">
-                    <div class="week-stat">
-                        <span class="week-stat-label">Current Balance:</span>
-                        <span class="week-stat-value ${currentBalance >= 0 ? 'positive' : 'negative'}">$${currentBalance.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat">
-                        <span class="week-stat-label">Total Income:</span>
-                        <span class="week-stat-value positive">$${totalIncome.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat">
-                        <span class="week-stat-label">Total Expenses:</span>
-                        <span class="week-stat-value negative">$${totalExpenses.toFixed(2)}</span>
-                    </div>
-                    <div class="week-stat" style="border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px;">
-                        <span class="week-stat-label">Net Monthly:</span>
-                        <span class="week-stat-value ${netMonthly >= 0 ? 'positive' : 'negative'}">$${netMonthly.toFixed(2)}</span>
-                    </div>
-                </div>
-            `;
-
-            const statsElement = document.getElementById('quickStatsConfig');
-            if (statsElement) {
-                statsElement.innerHTML = stats;
-            }
-        }
-
-        function generateActionPlan() {
-            const forecast = calculateForecast();
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
-            const netMonthly = totalIncome - totalExpenses;
-            
-            const actionPlan = [];
-
-            // Financial Health Status
-            if (netMonthly >= 0 && currentBalance >= 0) {
-                actionPlan.push(`
-                    <div class="success-box">
-                        <h3>✅ Healthy Financial Position</h3>
-                        <p>Your finances are in good shape! You have positive cash flow and a healthy balance.</p>
-                        <ul style="margin-top: 10px; padding-left: 20px;">
-                            <li>Consider building an emergency fund (3-6 months of expenses)</li>
-                            <li>Look into investment opportunities</li>
-                            <li>Review discretionary expenses for optimization</li>
-                        </ul>
-                    </div>
-                `);
-            } else if (netMonthly < 0) {
-                actionPlan.push(`
-                    <div class="warning-box">
-                        <h3>⚠️ Negative Cash Flow Detected</h3>
-                        <p>Your expenses exceed your income by $${Math.abs(netMonthly).toFixed(2)} per month.</p>
-                        <ul style="margin-top: 10px; padding-left: 20px;">
-                            <li>Identify and reduce non-essential expenses</li>
-                            <li>Look for additional income opportunities</li>
-                            <li>Prioritize essential expenses</li>
-                        </ul>
-                    </div>
-                `);
-            }
-
-            // Deficit weeks warning
-            const deficitWeeks = forecast.filter(w => w.endingBalance < 0);
-            if (deficitWeeks.length > 0) {
-                actionPlan.push(`
-                    <div class="warning-box">
-                        <h3>🚨 Projected Deficit Weeks</h3>
-                        <p>Your forecast shows ${deficitWeeks.length} week(s) with negative balance:</p>
-                        <ul style="margin-top: 10px; padding-left: 20px;">
-                            ${deficitWeeks.map(w => `<li>Week ${w.weekNumber}: $${w.endingBalance.toFixed(2)}</li>`).join('')}
-                        </ul>
-                    </div>
-                `);
-            }
-
-            // Income breakdown
-            actionPlan.push(`
-                <div class="action-item">
-                    <strong>💰 Income Breakdown:</strong>
-                    ${incomes.length > 0 ? 
-                        incomes.map(inc => `<div style="margin-top: 4px;">• ${inc.name || 'Unnamed'}: $${(inc.amount || 0).toFixed(2)} (${inc.frequency})</div>`).join('') :
-                        '<div style="margin-top: 4px;">No income sources configured</div>'
-                    }
-                </div>
-            `);
-
-            // Expense breakdown
-            const essentialExpenses = expenses.filter(e => e.isEssential);
-            const nonEssentialExpenses = expenses.filter(e => !e.isEssential);
-            
-            actionPlan.push(`
-                <div class="action-item">
-                    <strong>💸 Expense Breakdown:</strong>
-                    ${expenses.length > 0 ? 
-                        `<div style="margin-top: 10px;">
-                            <strong>Essential Expenses:</strong>
-                            ${essentialExpenses.length > 0 ? 
-                                essentialExpenses.map(exp => `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency})</div>`).join('') :
-                                '<div style="margin-top: 4px;">None</div>'
-                            }
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <strong>Non-Essential Expenses:</strong>
-                            ${nonEssentialExpenses.length > 0 ? 
-                                nonEssentialExpenses.map(exp => `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency})</div>`).join('') :
-                                '<div style="margin-top: 4px;">None</div>'
-                            }
-                        </div>` :
-                        '<div style="margin-top: 4px;">No expenses configured</div>'
-                    }
-                </div>
-            `);
-
-            // Recommendations
-            actionPlan.push(`
-                <div class="action-item">
-                    <strong>💡 Recommendations:</strong>
-                    <div style="margin-top: 10px;">
-                        ${netMonthly < 0 ? 
-                            '<div>1. Focus on reducing non-essential expenses first</div>' : 
-                            '<div>1. Continue maintaining positive cash flow</div>'
-                        }
-                        ${currentBalance < totalExpenses * 3 ? 
-                            '<div>2. Build an emergency fund of 3-6 months expenses</div>' : 
-                            '<div>2. Consider investment opportunities for surplus funds</div>'
-                        }
-                        <div>3. Review and adjust your budget monthly</div>
-                        <div>4. Track actual spending vs. projected spending</div>
-                    </div>
-                </div>
-            `);
-
-            document.getElementById('actionPlanContent').innerHTML = actionPlan.join('');
-        }
-
-        function updateAllViews() {
-            updateDashboard();
-            updateConfigPage();
-            // Don't automatically update forecast page to avoid unnecessary chart redraws
-        }
-
-        function exportData() {
-            const data = {
-                incomes,
-                expenses,
-                currentBalance,
-                exportDate: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `coinforecast-export-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json,.csv';
-            
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
+        // Update everyday toggle when individual days change
+        dayChecks.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    checkbox.parentElement.classList.add('selected');
+                } else {
+                    checkbox.parentElement.classList.remove('selected');
+                }
                 
-                reader.onload = (event) => {
-                    try {
-                        const content = event.target.result;
-                        
-                        // Check if it's CSV or JSON
-                        if (file.name.endsWith('.csv')) {
-                            importCSV(content);
-                        } else {
-                            const data = JSON.parse(content);
-                            
-                            if (confirm('This will replace all current data. Continue?')) {
-                                incomes = data.incomes || [];
-                                expenses = data.expenses || [];
-                                currentBalance = data.currentBalance || 0;
-                                
-                                // Reset unsaved flags
-                                hasUnsavedIncomes = false;
-                                hasUnsavedExpenses = false;
-                                
-                                saveData();
-                                loadData();
-                                updateAllViews();
-                                
-                                alert('Data imported successfully! ✓');
-                            }
-                        }
-                    } catch (error) {
-                        alert('Error importing data: ' + error.message);
-                    }
-                };
-                
-                reader.readAsText(file);
-            };
-            
-            input.click();
+                // Update everyday toggle state
+                const allChecked = Array.from(dayChecks).every(cb => cb.checked);
+                everydayToggle.checked = allChecked;
+            });
+        });
+
+        // Update savings display when slider changes
+        savingsInput.addEventListener('input', () => {
+            updateSavingsDisplay();
+        });
+
+        // Update savings display when balance/inflow/outflow changes
+        balanceInput.addEventListener('input', updateSavingsDisplay);
+        inflowInput.addEventListener('input', updateSavingsDisplay);
+        outflowInput.addEventListener('input', updateSavingsDisplay);
+
+        // Update savings display
+        function updateSavingsDisplay() {
+            const balance = parseFloat(balanceInput.value) || 0;
+            const inflow = parseFloat(inflowInput.value) || 0;
+            const outflow = parseFloat(outflowInput.value) || 0;
+            const savingsPercent = parseInt(savingsInput.value) || 0;
+
+            const endingBalance = balance + inflow - outflow;
+            const savingsAmount = Math.max(0, endingBalance * (savingsPercent / 100));
+
+            savingsPercentDisplay.textContent = `${savingsPercent}%`;
+            savingsAmountDisplay.textContent = `($${savingsAmount.toFixed(2)})`;
         }
 
-        function importCSV(csvContent) {
-            const lines = csvContent.trim().split('\n');
-            if (lines.length < 2) {
-                alert('CSV file appears to be empty or invalid.');
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem('taskCoinState');
+            if (saved) {
+                state = JSON.parse(saved);
+                updateUI();
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('taskCoinState', JSON.stringify(state));
+        }
+
+        // Update UI with current state
+        function updateUI() {
+            // Update budget inputs
+            balanceInput.value = state.budget.balance || '';
+            inflowInput.value = state.budget.inflow || '';
+            outflowInput.value = state.budget.outflow || '';
+            savingsInput.value = state.budget.savingsPercent || 0;
+            manualAllowanceInput.value = state.budget.manualAllowance || '';
+            
+            // Update savings display
+            updateSavingsDisplay();
+            
+            // Update toggle
+            if (state.budget.manualMode) {
+                manualToggle.classList.add('active');
+                manualAllowanceGroup.style.display = 'block';
+            } else {
+                manualToggle.classList.remove('active');
+                manualAllowanceGroup.style.display = 'none';
+            }
+
+            // Update tasks
+            renderTasks();
+            updateUnlockDisplay();
+        }
+
+        // Toggle manual mode
+        manualToggle.addEventListener('click', () => {
+            state.budget.manualMode = !state.budget.manualMode;
+            if (state.budget.manualMode) {
+                manualToggle.classList.add('active');
+                manualAllowanceGroup.style.display = 'block';
+            } else {
+                manualToggle.classList.remove('active');
+                manualAllowanceGroup.style.display = 'none';
+            }
+            saveState();
+            calculateAllowance();
+        });
+
+        // Calculate allowance
+        function calculateAllowance() {
+            const balance = parseFloat(balanceInput.value) || 0;
+            const inflow = parseFloat(inflowInput.value) || 0;
+            const outflow = parseFloat(outflowInput.value) || 0;
+            const savingsPercent = parseInt(savingsInput.value) || 0;
+
+            state.budget.balance = balance;
+            state.budget.inflow = inflow;
+            state.budget.outflow = outflow;
+            state.budget.savingsPercent = savingsPercent;
+
+            if (state.budget.manualMode) {
+                const manual = parseFloat(manualAllowanceInput.value) || 0;
+                state.budget.manualAllowance = manual;
+                state.budget.potentialAllowance = manual;
+            } else {
+                const endingBalance = balance + inflow - outflow;
+                const savingsAmount = Math.max(0, endingBalance * (savingsPercent / 100));
+                const calculated = (balance + inflow) - (outflow + savingsAmount);
+                state.budget.potentialAllowance = Math.max(0, calculated);
+            }
+
+            saveState();
+            updateUnlockDisplay();
+            
+            // Animate the potential amount
+            sidebarPotential.classList.add('highlight');
+            setTimeout(() => sidebarPotential.classList.remove('highlight'), 600);
+        }
+
+        calculateBtn.addEventListener('click', calculateAllowance);
+
+        // Update manual allowance
+        manualAllowanceInput.addEventListener('input', () => {
+            if (state.budget.manualMode) {
+                calculateAllowance();
+            }
+        });
+
+        // Add task
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (!taskText) return;
+
+            // Get selected days
+            const selectedDays = Array.from(dayChecks)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            if (selectedDays.length === 0) {
+                alert('Please select at least one day for this task.');
                 return;
             }
 
-            // Parse header
-            const headers = parseCSVLine(lines[0]);
-            
-            // Normalize headers (lowercase, trim)
-            const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
-            
-            // Detect column indices
-            const columnMap = {
-                name: findColumnIndex(normalizedHeaders, ['name', 'expense', 'description', 'item']),
-                amount: findColumnIndex(normalizedHeaders, ['amount', 'cost', 'price', 'value']),
-                date: findColumnIndex(normalizedHeaders, ['date', 'due date', 'due', 'next date', 'duedate']),
-                frequency: findColumnIndex(normalizedHeaders, ['frequency', 'freq', 'recurring', 'period']),
-                essential: findColumnIndex(normalizedHeaders, ['essential', 'necessary', 'required', 'priority']),
-                type: findColumnIndex(normalizedHeaders, ['type', 'category'])
+            const priority = taskPriority.value;
+            const task = {
+                id: Date.now(),
+                text: taskText,
+                priority: priority,
+                selectedDays: selectedDays,
+                completedDays: []
             };
 
-            // Parse data rows
-            const parsedData = [];
-            for (let i = 1; i < lines.length; i++) {
-                const values = parseCSVLine(lines[i]);
-                if (values.length === 0 || values.every(v => !v.trim())) continue;
-
-                const row = {
-                    id: Date.now() + i,
-                    name: columnMap.name !== -1 ? values[columnMap.name]?.trim() : '',
-                    amount: columnMap.amount !== -1 ? parseAmount(values[columnMap.amount]) : 0,
-                    frequency: columnMap.frequency !== -1 ? parseFrequency(values[columnMap.frequency]) : 'monthly',
-                    nextDate: columnMap.date !== -1 ? parseDate(values[columnMap.date]) : new Date().toISOString().split('T')[0],
-                    isEssential: columnMap.essential !== -1 ? parseBoolean(values[columnMap.essential]) : true
-                };
-
-                // Determine if it's income or expense based on type column or default to expense
-                const typeValue = columnMap.type !== -1 ? values[columnMap.type]?.toLowerCase() : '';
-                const isIncome = typeValue.includes('income') || typeValue.includes('revenue');
-                
-                parsedData.push({ ...row, isIncome });
-            }
-
-            // Ask user to specify type if no type column detected
-            let userSpecifiedType = null;
-            if (columnMap.type === -1) {
-                const typeChoice = confirm(
-                    `No "Type" column detected in CSV.\n\n` +
-                    `Are these EXPENSES?\n\n` +
-                    `• Click OK for EXPENSES 💸\n` +
-                    `• Click Cancel for INCOME 💰`
-                );
-                userSpecifiedType = typeChoice ? 'expense' : 'income';
-                
-                // Override all items with user's choice
-                parsedData.forEach(item => {
-                    item.isIncome = userSpecifiedType === 'income';
-                });
-            }
-
-            // Show preview and confirmation
-            const incomeCount = parsedData.filter(d => d.isIncome).length;
-            const expenseCount = parsedData.filter(d => !d.isIncome).length;
+            state.tasks.push(task);
+            taskInput.value = '';
             
-            const typeInfo = userSpecifiedType 
-                ? `\n\nUser specified: ${userSpecifiedType === 'income' ? '💰 Income' : '💸 Expenses'}`
-                : '';
+            // Reset day selection
+            dayChecks.forEach(cb => {
+                cb.checked = false;
+                cb.parentElement.classList.remove('selected');
+            });
+            everydayToggle.checked = false;
             
-            const message = `Found ${parsedData.length} items:\n` +
-                `• ${incomeCount} income sources\n` +
-                `• ${expenseCount} expenses\n\n` +
-                `Columns detected:\n` +
-                `• Name: ${columnMap.name !== -1 ? '✓' : '✗'}\n` +
-                `• Amount: ${columnMap.amount !== -1 ? '✓' : '✗'}\n` +
-                `• Date: ${columnMap.date !== -1 ? '✓' : '✗'}\n` +
-                `• Frequency: ${columnMap.frequency !== -1 ? '✓' : '✗ (defaulting to monthly)'}\n` +
-                `• Type: ${columnMap.type !== -1 ? '✓' : '✗ (user specified)'}` +
-                typeInfo +
-                `\n\nReplace existing data or append to it?`;
-            
-            const shouldReplace = confirm(message + '\n\nOK = Replace   |   Cancel = Append');
-            
-            if (shouldReplace === null) return; // User cancelled entirely
-            
-            if (!shouldReplace) {
-                // Append to existing data
-                const newIncomes = parsedData.filter(d => d.isIncome).map(d => {
-                    const { isIncome, ...rest } = d;
-                    return rest;
-                });
-                const newExpenses = parsedData.filter(d => !d.isIncome).map(d => {
-                    const { isIncome, ...rest } = d;
-                    return rest;
-                });
-                
-                incomes = [...incomes, ...newIncomes];
-                expenses = [...expenses, ...newExpenses];
-            } else {
-                // Replace existing data
-                incomes = parsedData.filter(d => d.isIncome).map(d => {
-                    const { isIncome, ...rest } = d;
-                    return rest;
-                });
-                expenses = parsedData.filter(d => !d.isIncome).map(d => {
-                    const { isIncome, ...rest } = d;
-                    return rest;
-                });
-            }
-            
-            // Reset unsaved flags
-            hasUnsavedIncomes = false;
-            hasUnsavedExpenses = false;
-            
-            saveData();
-            loadData();
-            updateAllViews();
-            
-            alert(`CSV imported successfully! ✓\nAdded ${incomeCount} income sources and ${expenseCount} expenses.`);
+            saveState();
+            renderTasks();
+            updateUnlockDisplay();
         }
 
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
+        addTaskBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        // Render tasks
+        function renderTasks() {
+            if (state.tasks.length === 0) {
+                taskList.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            taskList.innerHTML = state.tasks.map(task => {
+                const priorityLabel = task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Medium';
                 
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current);
-                    current = '';
+                // Handle old tasks without selectedDays
+                if (!task.selectedDays || task.selectedDays.length === 0) {
+                    task.selectedDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                }
+                if (!task.completedDays) {
+                    task.completedDays = task.completed ? task.selectedDays.slice() : [];
+                }
+                
+                const dayCheckboxes = task.selectedDays.map(day => {
+                    const isCompleted = task.completedDays.includes(day);
+                    
+                    // Check if completed retroactively
+                    let title = day;
+                    let className = `day-completion ${isCompleted ? 'completed' : ''}`;
+                    if (isCompleted && task.completionMeta && task.completionMeta[day]) {
+                        const completedDate = new Date(task.completionMeta[day] + 'T00:00:00');
+                        const expectedDate = getDateForDay(day);
+                        
+                        if (task.completionMeta[day] !== expectedDate) {
+                            const options = { month: 'short', day: 'numeric' };
+                            title = `${day} - Completed on ${completedDate.toLocaleDateString('en-US', options)}`;
+                            className += ' retroactive';
+                        }
+                    }
+                    
+                    return `
+                        <div class="${className}" title="${title}">
+                            <input type="checkbox" 
+                                   ${isCompleted ? 'checked' : ''} 
+                                   onchange="toggleDayCompletion(${task.id}, '${day}')"
+                                   onclick="event.stopPropagation()">
+                            <span>${day}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <li class="task-item" data-id="${task.id}">
+                        <div class="task-item-header">
+                            <span class="priority-badge priority-${task.priority || 'medium'}">${priorityLabel}</span>
+                            <span class="task-text">${task.text}</span>
+                            <button class="delete-btn" onclick="deleteTask(${task.id})">×</button>
+                        </div>
+                        <div class="task-item-body">
+                            <div class="task-days">
+                                ${dayCheckboxes}
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        // Toggle day completion with date tracking
+        window.toggleDayCompletionWithDate = function(taskId, day, completionDate) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                if (!task.completedDays) {
+                    task.completedDays = [];
+                }
+                if (!task.completionMeta) {
+                    task.completionMeta = {};
+                }
+                
+                const dayIndex = task.completedDays.indexOf(day);
+                if (dayIndex > -1) {
+                    // Uncomplete the day
+                    task.completedDays.splice(dayIndex, 1);
+                    delete task.completionMeta[day];
                 } else {
-                    current += char;
+                    // Complete the day and track when it was completed
+                    task.completedDays.push(day);
+                    task.completionMeta[day] = completionDate;
                 }
-            }
-            result.push(current);
-            
-            return result.map(val => val.replace(/^"|"$/g, '').trim());
-        }
-
-        function findColumnIndex(headers, possibleNames) {
-            for (let name of possibleNames) {
-                const index = headers.findIndex(h => h === name || h.includes(name));
-                if (index !== -1) return index;
-            }
-            return -1;
-        }
-
-        function parseAmount(amountStr) {
-            if (!amountStr) return 0;
-            // Remove $, commas, and any other non-numeric characters except decimal point
-            const cleaned = amountStr.replace(/[$,\s]/g, '');
-            const amount = parseFloat(cleaned);
-            return isNaN(amount) ? 0 : amount;
-        }
-
-        function parseDate(dateStr) {
-            if (!dateStr) return new Date().toISOString().split('T')[0];
-            
-            const currentYear = new Date().getFullYear();
-            
-            // Try to parse various date formats
-            // Format: "Jan 8", "January 8", "1/8", "01-08", etc.
-            
-            // Check if it's already in ISO format (YYYY-MM-DD)
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                return dateStr;
-            }
-            
-            // Handle "Mon DD" or "Month DD" format (e.g., "Jan 8", "January 8")
-            const monthDayMatch = dateStr.match(/^([A-Za-z]+)\s+(\d{1,2})$/);
-            if (monthDayMatch) {
-                const monthName = monthDayMatch[1];
-                const day = parseInt(monthDayMatch[2]);
                 
-                const monthMap = {
-                    'jan': 0, 'january': 0,
-                    'feb': 1, 'february': 1,
-                    'mar': 2, 'march': 2,
-                    'apr': 3, 'april': 3,
-                    'may': 4,
-                    'jun': 5, 'june': 5,
-                    'jul': 6, 'july': 6,
-                    'aug': 7, 'august': 7,
-                    'sep': 8, 'september': 8,
-                    'oct': 9, 'october': 9,
-                    'nov': 10, 'november': 10,
-                    'dec': 11, 'december': 11
-                };
-                
-                const month = monthMap[monthName.toLowerCase()];
-                if (month !== undefined) {
-                    const date = new Date(currentYear, month, day);
-                    return date.toISOString().split('T')[0];
-                }
+                saveState();
+                renderTasks();
+                renderTodayTasks();
+                updateUnlockDisplay();
             }
-            
-            // Try standard Date parsing as fallback
-            const parsedDate = new Date(dateStr);
-            if (!isNaN(parsedDate.getTime())) {
-                return parsedDate.toISOString().split('T')[0];
+        };
+
+        // Toggle day completion (for weekly tasks view)
+        window.toggleDayCompletion = function(taskId, day) {
+            const todayString = getTodayDateString();
+            toggleDayCompletionWithDate(taskId, day, todayString);
+        };
+
+        // Delete task
+        window.deleteTask = function(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveState();
+            renderTasks();
+            updateUnlockDisplay();
+        };
+
+        // Get priority weight
+        function getPriorityWeight(priority) {
+            const weights = {
+                'easy': 1,
+                'medium': 2,
+                'hard': 3
+            };
+            return weights[priority] || 2;
+        }
+
+        // Trigger confetti celebration
+        function celebrateCompletion() {
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
             }
-            
-            // If all else fails, return today's date
-            return new Date().toISOString().split('T')[0];
-        }
 
-        function parseFrequency(freqStr) {
-            if (!freqStr) return 'monthly';
-            
-            const normalized = freqStr.toLowerCase().trim();
-            
-            if (normalized.includes('week') && !normalized.includes('bi')) return 'weekly';
-            if (normalized.includes('biweek') || normalized.includes('bi-week') || normalized.includes('every 2 week')) return 'biweekly';
-            if (normalized.includes('month')) return 'monthly';
-            
-            return 'monthly'; // Default
-        }
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
 
-        function parseBoolean(value) {
-            if (!value) return false;
-            
-            const normalized = value.toString().toLowerCase().trim();
-            return normalized === 'true' || normalized === 'yes' || normalized === '1' || normalized === 'y';
-        }
-
-        function clearAllData() {
-            if (confirm('⚠️ This will delete ALL data. This cannot be undone. Continue?')) {
-                if (confirm('Are you absolutely sure? This is your last chance!')) {
-                    localStorage.removeItem('cashFlowData');
-                    incomes = [];
-                    expenses = [];
-                    currentBalance = 0;
-                    
-                    // Reset unsaved flags
-                    hasUnsavedIncomes = false;
-                    hasUnsavedExpenses = false;
-                    
-                    document.getElementById('currentBalance').value = 0;
-                    renderIncomesTable();
-                    renderExpensesTable();
-                    updateAllViews();
-                    
-                    alert('All data has been cleared.');
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
                 }
-            }
-        }
 
-        // Listen for current balance changes
-        document.getElementById('currentBalance').addEventListener('change', function() {
-            currentBalance = parseFloat(this.value) || 0;
-            saveData();
-            updateAllViews();
-        });
-
-        // Redraw chart on window resize for mobile responsiveness
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                // Check if we're on the forecast page
-                const forecastPage = document.getElementById('forecast');
-                if (forecastPage && forecastPage.classList.contains('active')) {
-                    renderForecastPage();
-                }
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                });
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                });
             }, 250);
+        }
+
+        // Update unlock display
+        function updateUnlockDisplay() {
+            const totalTasks = state.tasks.length;
+            
+            if (totalTasks === 0) {
+                // Update sidebar
+                sidebarUnlocked.textContent = '$0.00';
+                sidebarPotential.textContent = `$${state.budget.potentialAllowance.toFixed(2)}`;
+                
+                // Update budget page if elements exist
+                progressBar.style.width = '0%';
+                progressText.textContent = '0 of 0 days completed (0%)';
+                totalTasksEl.textContent = '0';
+                completedTasksEl.textContent = '0';
+                completionRateEl.textContent = '0%';
+                return;
+            }
+
+            // Calculate weighted completion
+            let totalWeight = 0;
+            let completedWeight = 0;
+            let totalDaysCompleted = 0;
+            let totalDaysScheduled = 0;
+
+            state.tasks.forEach(task => {
+                const priorityWeight = getPriorityWeight(task.priority);
+                
+                // Handle old tasks without selectedDays
+                if (!task.selectedDays || task.selectedDays.length === 0) {
+                    task.selectedDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                }
+                if (!task.completedDays) {
+                    task.completedDays = task.completed ? task.selectedDays.slice() : [];
+                }
+                
+                const daysScheduled = task.selectedDays.length;
+                const daysCompleted = task.completedDays.length;
+                
+                // Weight = priority weight * number of days scheduled
+                totalWeight += priorityWeight * daysScheduled;
+                completedWeight += priorityWeight * daysCompleted;
+                
+                totalDaysScheduled += daysScheduled;
+                totalDaysCompleted += daysCompleted;
+            });
+
+            const percentage = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+            const unlocked = (state.budget.potentialAllowance * (percentage / 100)).toFixed(2);
+
+            // Update sidebar (persistent across all pages)
+            sidebarUnlocked.textContent = `$${unlocked}`;
+            sidebarPotential.textContent = `$${state.budget.potentialAllowance.toFixed(2)}`;
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${totalDaysCompleted} of ${totalDaysScheduled} days completed (${Math.round(percentage)}% weighted)`;
+            
+            totalTasksEl.textContent = totalTasks;
+            completedTasksEl.textContent = totalDaysCompleted;
+            completionRateEl.textContent = `${Math.round(percentage)}%`;
+
+            // Animate unlocked amount on change
+            sidebarUnlocked.classList.add('highlight');
+            setTimeout(() => sidebarUnlocked.classList.remove('highlight'), 600);
+
+            // Trigger confetti when reaching 100% (and wasn't at 100% before)
+            if (percentage === 100 && state.lastCompletionPercentage < 100) {
+                celebrateCompletion();
+            }
+
+            state.lastCompletionPercentage = percentage;
+        }
+
+        // Reset for new week
+        resetWeekBtn.addEventListener('click', () => {
+            if (confirm('Reset for new week? This will clear all tasks and reset your allowance, but keep your base balance.')) {
+                state.tasks = [];
+                state.lastCompletionPercentage = 0;
+                // Keep the balance, but reset potential allowance to 0
+                state.budget.potentialAllowance = 0;
+                // Keep manual mode setting and manual allowance value
+                saveState();
+                renderTasks();
+                updateUnlockDisplay();
+                
+                // Show feedback
+                alert('Week reset! Ready for new tasks. Don\'t forget to recalculate your allowance.');
+            }
         });
 
-        // Initialize on page load
-        window.addEventListener('load', init);
+        // Initialize
+        loadState();
+        updateSavingsDisplay();
+        renderTodayTasks();
+        updateDateNavigation();
+        
+        // Update sidebar display on load
+        updateUnlockDisplay();
     </script>
 </body>
 </html>
