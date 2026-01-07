@@ -51,5 +51,4 @@ Frequency
 
 If a "Type" column isn't found, the app will ask you to categorize the upload as either Income or Expenses.
 
-📝 License
-This project is open-source and available under the MIT License.
+
