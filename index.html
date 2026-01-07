@@ -817,6 +817,20 @@
             slider.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
         }
 
+        function getMonthlyAmount(amount, frequency) {
+            if (!amount) return 0;
+            
+            switch(frequency) {
+                case 'weekly':
+                    return amount * 4.33; // Average weeks per month
+                case 'biweekly':
+                    return amount * 2.17; // 26 pay periods / 12 months
+                case 'monthly':
+                default:
+                    return amount;
+            }
+        }
+
         function loadData() {
             const saved = localStorage.getItem('cashFlowData');
             if (saved) {
@@ -1424,8 +1438,8 @@
         }
 
         function updateStatsRow() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + getMonthlyAmount(inc.amount, inc.frequency), 0);
             const netMonthly = totalIncome - totalExpenses;
             const savingsAmount = netMonthly > 0 ? (netMonthly * savingsPercent / 100) : 0;
             const netAfterSavings = netMonthly - savingsAmount;
@@ -1466,8 +1480,8 @@
         }
 
         function updateQuickStats() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + getMonthlyAmount(inc.amount, inc.frequency), 0);
             const netMonthly = totalIncome - totalExpenses;
             const savingsAmount = netMonthly > 0 ? (netMonthly * savingsPercent / 100) : 0;
             const netAfterSavings = netMonthly - savingsAmount;
@@ -1507,8 +1521,8 @@
         }
 
         function updateQuickStatsConfig() {
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + getMonthlyAmount(inc.amount, inc.frequency), 0);
             const netMonthly = totalIncome - totalExpenses;
             const savingsAmount = netMonthly > 0 ? (netMonthly * savingsPercent / 100) : 0;
             const netAfterSavings = netMonthly - savingsAmount;
@@ -1552,8 +1566,8 @@
 
         function generateActionPlan() {
             const forecast = calculateForecast();
-            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-            const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
+            const totalIncome = incomes.reduce((sum, inc) => sum + getMonthlyAmount(inc.amount, inc.frequency), 0);
             const netMonthly = totalIncome - totalExpenses;
             
             const actionPlan = [];
@@ -1604,15 +1618,22 @@
                 <div class="action-item">
                     <strong>💰 Income Breakdown:</strong>
                     ${incomes.length > 0 ? 
-                        incomes.map(inc => `<div style="margin-top: 4px;">• ${inc.name || 'Unnamed'}: $${(inc.amount || 0).toFixed(2)} (${inc.frequency})</div>`).join('') :
+                        incomes.map(inc => {
+                            const monthly = getMonthlyAmount(inc.amount || 0, inc.frequency);
+                            const freqLabel = inc.frequency === 'monthly' ? '' : ` → $${monthly.toFixed(2)}/mo`;
+                            return `<div style="margin-top: 4px;">• ${inc.name || 'Unnamed'}: $${(inc.amount || 0).toFixed(2)} (${inc.frequency}${freqLabel})</div>`;
+                        }).join('') :
                         '<div style="margin-top: 4px;">No income sources configured</div>'
                     }
+                    ${incomes.length > 0 ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155;"><strong>Total Monthly Income: $${totalIncome.toFixed(2)}</strong></div>` : ''}
                 </div>
             `);
 
             // Expense breakdown
             const essentialExpenses = expenses.filter(e => e.isEssential);
             const nonEssentialExpenses = expenses.filter(e => !e.isEssential);
+            const essentialTotal = essentialExpenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
+            const nonEssentialTotal = nonEssentialExpenses.reduce((sum, e) => sum + getMonthlyAmount(e.amount, e.frequency), 0);
             
             actionPlan.push(`
                 <div class="action-item">
@@ -1621,17 +1642,28 @@
                         `<div style="margin-top: 10px;">
                             <strong>Essential Expenses:</strong>
                             ${essentialExpenses.length > 0 ? 
-                                essentialExpenses.map(exp => `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency})</div>`).join('') :
+                                essentialExpenses.map(exp => {
+                                    const monthly = getMonthlyAmount(exp.amount || 0, exp.frequency);
+                                    const freqLabel = exp.frequency === 'monthly' ? '' : ` → $${monthly.toFixed(2)}/mo`;
+                                    return `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency}${freqLabel})</div>`;
+                                }).join('') :
                                 '<div style="margin-top: 4px;">None</div>'
                             }
+                            ${essentialExpenses.length > 0 ? `<div style="margin-top: 4px; font-weight: 600;">Subtotal: $${essentialTotal.toFixed(2)}/mo</div>` : ''}
                         </div>
                         <div style="margin-top: 10px;">
                             <strong>Non-Essential Expenses:</strong>
                             ${nonEssentialExpenses.length > 0 ? 
-                                nonEssentialExpenses.map(exp => `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency})</div>`).join('') :
+                                nonEssentialExpenses.map(exp => {
+                                    const monthly = getMonthlyAmount(exp.amount || 0, exp.frequency);
+                                    const freqLabel = exp.frequency === 'monthly' ? '' : ` → $${monthly.toFixed(2)}/mo`;
+                                    return `<div style="margin-top: 4px;">• ${exp.name || 'Unnamed'}: $${(exp.amount || 0).toFixed(2)} (${exp.frequency}${freqLabel})</div>`;
+                                }).join('') :
                                 '<div style="margin-top: 4px;">None</div>'
                             }
-                        </div>` :
+                            ${nonEssentialExpenses.length > 0 ? `<div style="margin-top: 4px; font-weight: 600;">Subtotal: $${nonEssentialTotal.toFixed(2)}/mo</div>` : ''}
+                        </div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155;"><strong>Total Monthly Expenses: $${totalExpenses.toFixed(2)}</strong></div>` :
                         '<div style="margin-top: 4px;">No expenses configured</div>'
                     }
                 </div>
