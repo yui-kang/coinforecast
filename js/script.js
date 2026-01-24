@@ -53,28 +53,30 @@ let profiles = {};
 
 // ===== 2. NAVIGATION LOGIC =====
 // Handles page switching and mobile menu
+// NOTE: These event listeners run after DOM is loaded (see bottom of file)
 
-// Navigation Logic
-const navToggle = document.getElementById('navToggle');
-const navMenu = document.getElementById('navMenu');
-const navLinks = document.querySelectorAll('.nav-link');
+function setupNavigation() {
+    const navToggle = document.getElementById('navToggle');
+    const navMenu = document.getElementById('navMenu');
+    const navLinks = document.querySelectorAll('.nav-link');
 
-navToggle.addEventListener('click', () => {
-    navToggle.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
-
-navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const pageName = link.getAttribute('data-page');
-        navigateToPage(pageName);
-        
-        // Close mobile menu
-        navToggle.classList.remove('active');
-        navMenu.classList.remove('active');
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('active');
+        navMenu.classList.toggle('active');
     });
-});
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageName = link.getAttribute('data-page');
+            navigateToPage(pageName);
+            
+            // Close mobile menu
+            navToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+        });
+    });
+}
 
 function navigateToPage(pageName) {
     // Hide all pages
@@ -1703,38 +1705,47 @@ function clearAllData() {
     }
 }
 
-// Listen for current balance changes
-document.getElementById('currentBalance').addEventListener('change', function() {
-    currentBalance = parseAmount(this.value);
-    saveData();
-    updateAllViews();
-});
+// ===== INITIALIZATION =====
+// Wait for DOM to be ready before setting up event listeners
+// This is CRITICAL when JavaScript is in a separate file!
 
-// Listen for savings percent changes
-document.getElementById('savingsPercent').addEventListener('input', function() {
-    savingsPercent = parseInt(this.value) || 0;
-    document.getElementById('savingsPercentDisplay').textContent = savingsPercent + '%';
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup navigation
+    setupNavigation();
     
-    // Update slider gradient
-    const percentage = (savingsPercent / 100) * 100;
-    this.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
-    
-    saveData();
-    updateAllViews();
-});
+    // Listen for current balance changes
+    document.getElementById('currentBalance').addEventListener('change', function() {
+        currentBalance = parseAmount(this.value);
+        saveData();
+        updateAllViews();
+    });
 
-// Redraw chart on window resize for mobile responsiveness
-let resizeTimeout;
-window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        // Check if we're on the forecast page
-        const forecastPage = document.getElementById('forecast');
-        if (forecastPage && forecastPage.classList.contains('active')) {
-            renderForecastPage();
-        }
-    }, 250);
-});
+    // Listen for savings percent changes
+    document.getElementById('savingsPercent').addEventListener('input', function() {
+        savingsPercent = parseInt(this.value) || 0;
+        document.getElementById('savingsPercentDisplay').textContent = savingsPercent + '%';
+        
+        // Update slider gradient
+        const percentage = (savingsPercent / 100) * 100;
+        this.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
+        
+        saveData();
+        updateAllViews();
+    });
 
-// Initialize on page load
-window.addEventListener('load', init);
+    // Redraw chart on window resize for mobile responsiveness
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // Check if we're on the forecast page
+            const forecastPage = document.getElementById('forecast');
+            if (forecastPage && forecastPage.classList.contains('active')) {
+                renderForecastPage();
+            }
+        }, 250);
+    });
+
+    // Initialize the app
+    init();
+});
