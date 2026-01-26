@@ -87,7 +87,8 @@ function navigateToPage(pageName) {
     // Show selected page
     document.getElementById(pageName).classList.add('active');
 
-    // Update nav links
+    // Update nav links (query fresh each time to avoid scope issues)
+    const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('data-page') === pageName) {
