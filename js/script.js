@@ -375,6 +375,8 @@ function getMonthlyAmount(amount, frequency) {
     if (!amount) return 0;
     
     switch(frequency) {
+        case 'one-time':
+            return 0; // One-time items don't count in monthly totals
         case 'weekly':
             return amount * 4.33; // Average weeks per month
         case 'biweekly':
@@ -586,6 +588,7 @@ function renderIncomesTable() {
             <td><input type="number" step="0.01" value="${inc.amount || 0}" onchange="updateIncome(${inc.id}, 'amount', parseFloat(this.value))"></td>
             <td>
                 <select onchange="updateIncome(${inc.id}, 'frequency', this.value)">
+                    <option value="one-time" ${inc.frequency === 'one-time' ? 'selected' : ''}>One-time</option>
                     <option value="weekly" ${inc.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
                     <option value="biweekly" ${inc.frequency === 'biweekly' ? 'selected' : ''}>Bi-weekly</option>
                     <option value="monthly" ${inc.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
@@ -605,6 +608,7 @@ function renderExpensesTable() {
             <td><input type="number" step="0.01" value="${exp.amount || 0}" onchange="updateExpense(${exp.id}, 'amount', parseFloat(this.value))"></td>
             <td>
                 <select onchange="updateExpense(${exp.id}, 'frequency', this.value)">
+                    <option value="one-time" ${exp.frequency === 'one-time' ? 'selected' : ''}>One-time</option>
                     <option value="weekly" ${exp.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
                     <option value="biweekly" ${exp.frequency === 'biweekly' ? 'selected' : ''}>Bi-weekly</option>
                     <option value="monthly" ${exp.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
@@ -791,7 +795,14 @@ function getOccurrenceInWeek(nextDateStr, frequency, weekStart, weekEnd) {
     let isDue = false;
     let actualDate = null;
 
-    if (frequency === 'weekly') {
+    if (frequency === 'one-time') {
+        // One-time items only occur if the nextDate falls in this week
+        if (nextDate >= weekStart && nextDate <= weekEnd) {
+            isDue = true;
+            actualDate = nextDate;
+        }
+        
+    } else if (frequency === 'weekly') {
         // Weekly occurs every week on the same day of week as nextDate
         const targetDayOfWeek = nextDate.getDay();
         
@@ -1661,6 +1672,7 @@ function parseFrequency(freqStr) {
     
     const normalized = freqStr.toLowerCase().trim();
     
+    if (normalized.includes('one-time') || normalized.includes('onetime') || normalized.includes('once')) return 'one-time';
     if (normalized.includes('week') && !normalized.includes('bi')) return 'weekly';
     if (normalized.includes('biweek') || normalized.includes('bi-week') || normalized.includes('every 2 week')) return 'biweekly';
     if (normalized.includes('month')) return 'monthly';
