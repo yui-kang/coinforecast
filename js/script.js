@@ -581,6 +581,51 @@ function removeExpense(id) {
     }
 }
 
+function sortExpenses(sortType) {
+    if (sortType === 'custom') {
+        // Don't sort, keep original order (by ID)
+        expenses.sort((a, b) => a.id - b.id);
+    } else if (sortType === 'date-asc') {
+        // Sort by due date, earliest first
+        expenses.sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+    } else if (sortType === 'date-desc') {
+        // Sort by due date, latest first
+        expenses.sort((a, b) => new Date(b.nextDate) - new Date(a.nextDate));
+    } else if (sortType === 'amount-desc') {
+        // Sort by amount, high to low
+        expenses.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+    } else if (sortType === 'amount-asc') {
+        // Sort by amount, low to high
+        expenses.sort((a, b) => (a.amount || 0) - (b.amount || 0));
+    } else if (sortType === 'name-asc') {
+        // Sort by name, A-Z
+        expenses.sort((a, b) => {
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    } else if (sortType === 'name-desc') {
+        // Sort by name, Z-A
+        expenses.sort((a, b) => {
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameB.localeCompare(nameA);
+        });
+    } else if (sortType === 'essential') {
+        // Sort by essential first, then by due date
+        expenses.sort((a, b) => {
+            // Essential items first
+            if (a.isEssential && !b.isEssential) return -1;
+            if (!a.isEssential && b.isEssential) return 1;
+            // If same essential status, sort by date
+            return new Date(a.nextDate) - new Date(b.nextDate);
+        });
+    }
+    
+    // Re-render the table
+    renderExpensesTable();
+}
+
 function renderIncomesTable() {
     const tbody = document.querySelector('#incomeTable tbody');
     tbody.innerHTML = incomes.map(inc => `
